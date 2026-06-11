@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { motion } from "framer-motion";
 import type { AgentId } from "@/services/types";
 import { AGENTS, agentRender, AGENT_BY_ID } from "@/lib/agents";
 import { BOARD_H, BOARD_W, depth, project } from "@/lib/iso";
@@ -10,6 +11,9 @@ import { AgentSprite } from "@/components/scene/AgentSprite";
 import { DispatchPacket } from "@/components/scene/DispatchPacket";
 import { Platform } from "@/components/scene/Platform";
 import { Prop, PROPS } from "@/components/scene/Prop";
+
+/** Pieds d'Atlas : origine de l'onde de commandement à la validation d'un plan. */
+const ATLAS_POS = project(AGENT_BY_ID.atlas.workSpot);
 
 interface DustSpec {
   left: string;
@@ -37,6 +41,7 @@ export function Diorama() {
   const agentRefs = useRef<Partial<Record<AgentId, HTMLDivElement>>>({});
   const [dust, setDust] = useState<DustSpec[] | null>(null);
   const dispatchesFx = useCrewStore((s) => s.dispatchesFx);
+  const atlasBurst = useCrewStore((s) => s.atlasBurst);
 
   useEffect(() => setDust(makeDust(16)), []);
 
@@ -144,6 +149,26 @@ export function Diorama() {
             {dispatchesFx.map((fx) => (
               <DispatchPacket key={fx.id} fx={fx} />
             ))}
+            {atlasBurst > 0 ? (
+              <motion.div
+                key={atlasBurst}
+                aria-hidden
+                className="pointer-events-none absolute rounded-[50%] border"
+                style={{
+                  left: ATLAS_POS.x - 90,
+                  top: ATLAS_POS.y - 45,
+                  width: 180,
+                  height: 90,
+                  zIndex: 300,
+                  borderColor: "rgba(94,231,255,0.75)",
+                  boxShadow:
+                    "0 0 30px rgba(94,231,255,0.4), inset 0 0 22px rgba(94,231,255,0.2)",
+                }}
+                initial={{ scale: 0.08, opacity: 0.95 }}
+                animate={{ scale: 2.7, opacity: 0 }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+              />
+            ) : null}
           </div>
         </div>
       </div>

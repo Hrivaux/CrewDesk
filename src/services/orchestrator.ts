@@ -173,6 +173,7 @@ export async function validatePlan(): Promise<void> {
 
   store.setPendingPlan(null);
   store.seedProjects([project]);
+  store.pulseAtlas();
   store.addChatMessage({
     role: "atlas",
     text: `C'est parti. Je crée le projet « ${project.name} » et je briefe l'équipe…`,

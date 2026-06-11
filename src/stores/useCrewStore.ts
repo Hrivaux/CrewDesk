@@ -43,10 +43,13 @@ export interface CrewState {
   planning: boolean;
   /** Plan proposé, en attente de validation/édition. */
   pendingPlan: Plan | null;
+  /** Compteur d'ondes de commandement d'Atlas (validation de plan). */
+  atlasBurst: number;
 
   addChatMessage: (msg: Omit<ChatMessage, "id" | "at">) => void;
   setPlanning: (planning: boolean) => void;
   setPendingPlan: (plan: Plan | null) => void;
+  pulseAtlas: () => void;
   reassignPendingTask: (index: number, agentId: AgentId) => void;
   updatePendingTaskTitle: (index: number, title: string) => void;
   removePendingTask: (index: number) => void;
@@ -112,6 +115,7 @@ export const useCrewStore = create<CrewState>()(
       chatMessages: [],
       planning: false,
       pendingPlan: null,
+      atlasBurst: 0,
 
       addChatMessage: (msg) =>
         set((s) => ({
@@ -124,6 +128,8 @@ export const useCrewStore = create<CrewState>()(
       setPlanning: (planning) => set({ planning }),
 
       setPendingPlan: (plan) => set({ pendingPlan: plan }),
+
+      pulseAtlas: () => set((s) => ({ atlasBurst: s.atlasBurst + 1 })),
 
       reassignPendingTask: (index, agentId) =>
         set((s) => {
