@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SimulationRunner } from "@/components/SimulationRunner";
 import { ToastHost } from "@/components/hud/ToastHost";
+import { TaskDetail } from "@/components/kanban/TaskDetail";
 import "./globals.css";
 
 const sora = Sora({
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="antialiased">
         <SimulationRunner />
         {children}
+        <TaskDetail />
         <ToastHost />
         <CommandPalette />
       </body>

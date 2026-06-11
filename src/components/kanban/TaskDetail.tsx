@@ -1,0 +1,159 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AGENT_BY_ID } from "@/lib/agents";
+import { useCrewStore } from "@/stores/useCrewStore";
+import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Markdown } from "@/components/ui/Markdown";
+
+const STATUS_LABEL: Record<string, string> = {
+  backlog: "Backlog",
+  assigned: "Assigné",
+  in_progress: "En cours",
+  review: "Revue",
+  done: "Terminé",
+};
+
+/** Détail d'une tâche : consigne, prérequis, et surtout le livrable produit. */
+export function TaskDetail() {
+  const selectedTask = useCrewStore((s) => s.selectedTask);
+  const setSelectedTask = useCrewStore((s) => s.setSelectedTask);
+  const task = useCrewStore((s) =>
+    s.selectedTask ? s.tasks.find((t) => t.id === s.selectedTask) : undefined,
+  );
+  const project = useCrewStore((s) =>
+    task?.projectId ? s.projects.find((p) => p.id === task.projectId) : undefined,
+  );
+  const deps = useCrewStore((s) =>
+    task?.dependsOnIds
+      ? s.tasks.filter((t) => task.dependsOnIds?.includes(t.id))
+      : [],
+  );
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!selectedTask) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedTask(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedTask, setSelectedTask]);
+
+  useEffect(() => setCopied(false), [selectedTask]);
+
+  const def = task ? AGENT_BY_ID[task.agentId] : null;
+
+  return (
+    <AnimatePresence>
+      {task && def ? (
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal aria-label={task.title}>
+          <motion.div
+            className="absolute inset-0 bg-[rgba(7,9,14,0.6)] backdrop-blur-[3px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedTask(null)}
+          />
+          <motion.aside
+            initial={{ x: "104%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "104%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 34 }}
+            className="glass absolute top-0 right-0 flex h-full w-[min(96vw,680px)] flex-col rounded-l-2xl"
+          >
+            <header className="border-b border-[rgba(234,240,248,0.07)] px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="font-display text-sm leading-snug font-bold">{task.title}</h2>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTask(null)}
+                  aria-label="Fermer"
+                  className="focus-ring -mt-0.5 text-base text-muted transition-colors hover:text-foreground"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                <Chip color={def.color}>
+                  {def.name} · {def.role}
+                </Chip>
+                <Chip>{STATUS_LABEL[task.status] ?? task.status}</Chip>
+                <Chip>~{task.estimateMin} min</Chip>
+                {project ? <Chip color={project.color}>◆ {project.name}</Chip> : null}
+              </div>
+            </header>
+
+            <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              <p className="label-mono">Consigne</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-foreground/85">
+                {task.description}
+              </p>
+
+              {deps.length > 0 ? (
+                <>
+                  <p className="label-mono mt-4">Prérequis</p>
+                  <ul className="mt-1.5 flex flex-col gap-1">
+                    {deps.map((dep) => (
+                      <li key={dep.id} className="flex items-center gap-2 text-[11px]">
+                        <span
+                          style={{ color: dep.status === "done" ? "#3CDFA0" : "#FFB35C" }}
+                        >
+                          {dep.status === "done" ? "✓" : "…"}
+                        </span>
+                        <button
+                          type="button"
+                          className="focus-ring truncate text-left text-foreground/85 underline-offset-2 hover:underline"
+                          onClick={() => setSelectedTask(dep.id)}
+                        >
+                          {dep.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
+              {task.error ? (
+                <div className="mt-4 rounded-lg border border-[rgba(255,138,76,0.35)] bg-[rgba(255,138,76,0.07)] px-3 py-2">
+                  <p className="label-mono" style={{ color: "#FF8A4C" }}>
+                    Dernière erreur
+                  </p>
+                  <p className="mt-1 text-[11px] text-foreground/85">{task.error}</p>
+                </div>
+              ) : null}
+
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <p className="label-mono">Livrable</p>
+                {task.deliverable ? (
+                  <Button
+                    onClick={() => {
+                      void navigator.clipboard.writeText(task.deliverable ?? "");
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1600);
+                    }}
+                  >
+                    {copied ? "Copié ✓" : "Copier"}
+                  </Button>
+                ) : null}
+              </div>
+              <div className="mt-2 pb-4">
+                {task.deliverable ? (
+                  <Markdown text={task.deliverable} />
+                ) : (
+                  <p className="rounded-lg border border-dashed border-[rgba(234,240,248,0.1)] px-3 py-5 text-center text-[11px] text-muted">
+                    {task.status === "in_progress"
+                      ? `${def.name} travaille dessus…`
+                      : "Pas encore de livrable — il apparaîtra ici quand l'agent aura terminé."}
+                  </p>
+                )}
+              </div>
+            </div>
+          </motion.aside>
+        </div>
+      ) : null}
+    </AnimatePresence>
+  );
+}

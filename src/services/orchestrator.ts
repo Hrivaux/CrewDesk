@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import type { IOrchestrator, Plan, PlannedTask, Project, Task } from "@/services/types";
+import type {
+  AtlasReply,
+  IOrchestrator,
+  Plan,
+  PlannedTask,
+  Project,
+  Task,
+} from "@/services/types";
 import { AGENT_BY_ID } from "@/lib/agents";
 import { useCrewStore } from "@/stores/useCrewStore";
 
@@ -133,25 +140,76 @@ const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 const PROJECT_COLORS = ["#5EE7FF", "#A777FF", "#3CDFA0", "#FFC94D", "#FF8A4C", "#4D8DFF"];
 
-/** L'utilisateur décrit son besoin ; Atlas répond avec un plan validable. */
+/**
+ * L'utilisateur décrit son besoin. En mode live, Atlas (API Anthropic) pose
+ * ses questions de cadrage puis propose un plan ; en simulation, le mock
+ * répond instantanément avec un plan par mots-clés.
+ */
 export async function askAtlas(request: string): Promise<void> {
   const store = useCrewStore.getState();
   store.addChatMessage({ role: "user", text: request });
   useCrewStore.getState().setPendingPlan(null);
   useCrewStore.getState().setPlanning(true);
 
-  await wait(1300 + Math.random() * 900);
+  if (!useCrewStore.getState().liveMode) {
+    await wait(1300 + Math.random() * 900);
+    const plan = await orchestrator.plan(request);
+    const topic = extractTopic(request);
+    const s = useCrewStore.getState();
+    s.setPlanning(false);
+    s.setPendingPlan(plan);
+    s.addChatMessage({
+      role: "atlas",
+      text: `Voici ce que je propose pour « ${topic} » — ${plan.tasks.length} tâches réparties sur l'équipe. Ajuste ce qu'il faut, puis valide.`,
+      planId: plan.id,
+    });
+    return;
+  }
 
-  const plan = await orchestrator.plan(request);
-  const topic = extractTopic(request);
-  const s = useCrewStore.getState();
-  s.setPlanning(false);
-  s.setPendingPlan(plan);
-  s.addChatMessage({
-    role: "atlas",
-    text: `Voici ce que je propose pour « ${topic} » — ${plan.tasks.length} tâches réparties sur l'équipe. Ajuste ce qu'il faut, puis valide.`,
-    planId: plan.id,
-  });
+  try {
+    const history = useCrewStore.getState().chatMessages.map((m) => ({
+      role: m.role === "atlas" ? ("assistant" as const) : ("user" as const),
+      content: m.planId
+        ? `${m.text}\n\n[Un plan a été proposé à l'utilisateur dans l'interface.]`
+        : m.text,
+    }));
+    const res = await fetch("/api/atlas", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ messages: history }),
+    });
+    const data = (await res.json().catch(() => ({}))) as
+      | AtlasReply
+      | { error?: string };
+    if (!res.ok || !("type" in data)) {
+      throw new Error(
+        ("error" in data ? data.error : undefined) ?? `HTTP ${res.status}`,
+      );
+    }
+    const s = useCrewStore.getState();
+    s.setPlanning(false);
+    if (data.type === "plan") {
+      s.setPendingPlan(data.plan);
+      s.addChatMessage({
+        role: "atlas",
+        text:
+          data.text ||
+          `Voici le plan que je propose — ${data.plan.tasks.length} tâches. Ajuste si besoin, puis valide.`,
+        planId: data.plan.id,
+      });
+    } else {
+      s.addChatMessage({ role: "atlas", text: data.text });
+    }
+  } catch (error) {
+    const s = useCrewStore.getState();
+    s.setPlanning(false);
+    s.addChatMessage({
+      role: "atlas",
+      text: `Impossible de joindre le serveur (${
+        error instanceof Error ? error.message : "erreur inconnue"
+      }). Vérifie la clé API puis réessaie.`,
+    });
+  }
 }
 
 /** Validation : projet créé, cartes une par une, dispatch en cascade. */
@@ -159,13 +217,13 @@ export async function validatePlan(): Promise<void> {
   const store = useCrewStore.getState();
   const plan = store.pendingPlan;
   if (!plan || plan.tasks.length === 0) return;
+  const live = store.liveMode;
 
-  const topic = extractTopic(plan.request);
   const color =
     PROJECT_COLORS[store.projects.length % PROJECT_COLORS.length] ?? "#5EE7FF";
   const project: Project = {
     id: `proj_${Date.now().toString(36)}`,
-    name: topic,
+    name: plan.projectName ?? extractTopic(plan.request),
     objective: plan.request,
     color,
     deadline: Date.now() + 14 * DAY_MS,
@@ -180,26 +238,40 @@ export async function validatePlan(): Promise<void> {
     text: `C'est parti. Je crée le projet « ${project.name} » et je briefe l'équipe…`,
   });
 
-  // Création séquencée des cartes : le backlog se remplit sous les yeux.
-  const createdIds: string[] = [];
-  for (const t of plan.tasks) {
-    await wait(420);
-    const task = makeTask({
+  // Construit toutes les tâches d'abord pour résoudre les dépendances
+  // (indices du plan → ids), puis création séquencée sous les yeux.
+  const tasks = plan.tasks.map((t) =>
+    makeTask({
       title: t.title,
       description: t.description,
       agentId: t.agentId,
       estimateMin: t.estimateMin,
       tags: t.tags,
       projectId: project.id,
-    });
-    createdIds.push(task.id);
+      source: live ? "live" : "sim",
+    }),
+  );
+  plan.tasks.forEach((t, i) => {
+    const target = tasks[i];
+    if (!target || !t.dependsOn?.length) return;
+    target.dependsOnIds = t.dependsOn
+      .map((d) => tasks[d]?.id)
+      .filter((id): id is string => Boolean(id));
+  });
+  for (const task of tasks) {
+    await wait(420);
     useCrewStore.getState().addTask(task);
   }
 
-  // Dispatch en cascade : Atlas lance les paquets vers les agents libres,
-  // la simulation prend le relais pour la suite.
-  createdIds.forEach((id, i) => {
-    window.setTimeout(() => useCrewStore.getState().dispatchTask(id), 600 + i * 750);
+  // Dispatch en cascade : Atlas lance les paquets vers les agents libres.
+  // En live, seules les tâches sans prérequis démarrent — les autres
+  // attendent leurs livrables ; le moteur prend le relais.
+  tasks.forEach((task, i) => {
+    if (live && task.dependsOnIds?.length) return;
+    window.setTimeout(
+      () => useCrewStore.getState().dispatchTask(task.id),
+      600 + i * 750,
+    );
   });
 
   useCrewStore.getState().addChatMessage({
@@ -294,20 +366,95 @@ const DISPATCH_COOLDOWN_MS = 3200;
 const SIM_MS_PER_MIN = 1400;
 /** Temps de relecture par Atlas avant validation. */
 const REVIEW_MS = 4800;
+/** Exécutions API simultanées maximum (coût + limites de débit). */
+const MAX_PARALLEL_EXECUTIONS = 2;
 
-export function startSimulation(): () => void {
+/* ----------------------- Exécution réelle (mode live) --------------------- */
+
+const inflight = new Set<string>();
+
+/** Vrai si tous les livrables prérequis de la tâche sont disponibles. */
+function depsMet(task: Task, tasks: Task[]): boolean {
+  return (task.dependsOnIds ?? []).every((id) => {
+    const dep = tasks.find((t) => t.id === id);
+    return !dep || dep.status === "done";
+  });
+}
+
+/** Appelle l'agent (API) et attache le livrable à la tâche. */
+async function executeTask(taskId: string): Promise<void> {
+  const s = useCrewStore.getState();
+  const task = s.tasks.find((t) => t.id === taskId);
+  if (!task) return;
+  const def = AGENT_BY_ID[task.agentId];
+  const project = task.projectId
+    ? s.projects.find((p) => p.id === task.projectId)
+    : undefined;
+  const context = (task.dependsOnIds ?? [])
+    .map((id) => s.tasks.find((t) => t.id === id))
+    .filter((dep): dep is Task => Boolean(dep?.deliverable))
+    .map((dep) => ({
+      title: dep.title,
+      agent: AGENT_BY_ID[dep.agentId].name,
+      deliverable: dep.deliverable ?? "",
+    }));
+
+  inflight.add(taskId);
+  try {
+    const res = await fetch("/api/execute", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        task: { title: task.title, description: task.description, tags: task.tags },
+        agent: { name: def.name, role: def.role, personality: def.personality },
+        project: project
+          ? { name: project.name, objective: project.objective }
+          : undefined,
+        context,
+      }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      deliverable?: string;
+      error?: string;
+    };
+    if (!res.ok || !data.deliverable) {
+      throw new Error(data.error ?? `HTTP ${res.status}`);
+    }
+    const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
+    if (cur && cur.status === "in_progress") {
+      useCrewStore.getState().sendToReview(taskId, data.deliverable);
+    }
+  } catch (error) {
+    const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
+    if (cur && cur.status === "in_progress") {
+      useCrewStore
+        .getState()
+        .failTask(
+          taskId,
+          error instanceof Error ? error.message : "Erreur inconnue",
+        );
+    }
+  } finally {
+    inflight.delete(taskId);
+  }
+}
+
+export function startSimulation(live: boolean): () => void {
   const store = useCrewStore;
   let lastDispatch = 0;
   let emptySince: number | null = null;
   let batchIndex = 0;
 
-  // Seed initial si tout est vide au premier lancement.
-  if (store.getState().projects.length === 0) {
-    store.getState().seedProjects(seedProjects());
-  }
-  if (store.getState().tasks.length === 0) {
-    const batch = SEED_BATCHES[0];
-    if (batch) store.getState().seedTasks(batch.map(makeTask));
+  // Seed de démonstration uniquement en simulation : en live, le backlog
+  // se remplit via les plans validés avec Atlas — chaque tâche coûte des tokens.
+  if (!live) {
+    if (store.getState().projects.length === 0) {
+      store.getState().seedProjects(seedProjects());
+    }
+    if (store.getState().tasks.length === 0) {
+      const batch = SEED_BATCHES[0];
+      if (batch) store.getState().seedTasks(batch.map(makeTask));
+    }
   }
 
   const interval = window.setInterval(() => {
@@ -330,12 +477,33 @@ export function startSimulation(): () => void {
       }
     }
 
-    // 2. Progression des tâches en cours ; à 100 % → revue.
+    // 2. Travail en cours.
+    //    Simulation : progression factice → revue à 100 %.
+    //    Live : lancement de l'appel API (livrable réel), progression
+    //    d'attente qui plafonne à 90 % jusqu'à la réponse.
     const fresh = store.getState();
     for (const task of fresh.tasks) {
       if (task.status !== "in_progress") continue;
       const carrier = fresh.agents[task.agentId];
       if (carrier.taskId !== task.id || carrier.status !== "working") continue;
+
+      if (live) {
+        if (task.deliverable) {
+          // Livrable déjà présent (rechargement) : direct en revue.
+          fresh.sendToReview(task.id);
+        } else if (inflight.has(task.id)) {
+          fresh.setTaskProgress(task.id, Math.min(task.progress + 0.9, 90));
+        } else if (inflight.size < MAX_PARALLEL_EXECUTIONS) {
+          fresh.log(
+            "start",
+            `${AGENT_BY_ID[task.agentId].name} produit « ${task.title} »…`,
+            task.agentId,
+          );
+          void executeTask(task.id);
+        }
+        continue;
+      }
+
       const totalMs = task.estimateMin * SIM_MS_PER_MIN;
       const delta = (TICK_MS / totalMs) * 100 * (0.7 + Math.random() * 0.6);
       const next = task.progress + delta;
@@ -351,15 +519,20 @@ export function startSimulation(): () => void {
     }
 
     // 4. Dispatch : Atlas pioche dans le backlog, et reprend les cartes
-    //    « Assigné » en attente (déplacées à la main vers un agent occupé).
+    //    « Assigné » en attente. En live : seulement les tâches issues d'un
+    //    plan validé, dont les prérequis sont livrés, et pas plus de deux
+    //    échecs (au-delà, réassignation manuelle requise).
     const cur = store.getState();
     if (now - lastDispatch >= DISPATCH_COOLDOWN_MS) {
-      const next = cur.tasks.find(
-        (t) =>
-          (t.status === "backlog" || t.status === "assigned") &&
-          cur.agents[t.agentId].status === "idle" &&
-          !cur.agents[t.agentId].taskId,
-      );
+      const next = cur.tasks.find((t) => {
+        if (t.status !== "backlog" && t.status !== "assigned") return false;
+        const rt = cur.agents[t.agentId];
+        if (rt.status !== "idle" || rt.taskId) return false;
+        if (!live) return true;
+        if (!depsMet(t, cur.tasks)) return false;
+        if (t.status === "assigned") return true;
+        return t.source === "live" && (t.attempts ?? 0) < 2;
+      });
       if (next) {
         cur.dispatchTask(next.id);
         lastDispatch = now;
@@ -386,26 +559,47 @@ export function startSimulation(): () => void {
       if (candidate) amb.sendToBreak(candidate.id);
     }
 
-    // 6. Tout est terminé : nouvelle vague après une pause.
-    const after = store.getState();
-    const pending = after.tasks.some((t) => t.status !== "done");
-    if (!pending && after.tasks.length > 0) {
-      if (emptySince === null) emptySince = now;
-      if (now - emptySince > 7000) {
-        batchIndex = (batchIndex + 1) % SEED_BATCHES.length;
-        const batch = SEED_BATCHES[batchIndex];
-        if (batch) after.seedTasks(batch.map(makeTask));
+    // 6. Tout est terminé (simulation) : nouvelle vague après une pause.
+    if (!live) {
+      const after = store.getState();
+      const pending = after.tasks.some((t) => t.status !== "done");
+      if (!pending && after.tasks.length > 0) {
+        if (emptySince === null) emptySince = now;
+        if (now - emptySince > 7000) {
+          batchIndex = (batchIndex + 1) % SEED_BATCHES.length;
+          const batch = SEED_BATCHES[batchIndex];
+          if (batch) after.seedTasks(batch.map(makeTask));
+          emptySince = null;
+        }
+      } else {
         emptySince = null;
       }
-    } else {
-      emptySince = null;
     }
   }, TICK_MS);
 
   return () => window.clearInterval(interval);
 }
 
-/** Démarre la simulation côté client (une seule instance). */
+/** Détecte le mode (clé API présente ?) puis démarre le moteur. */
 export function useSimulation(): void {
-  useEffect(() => startSimulation(), []);
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+    void (async () => {
+      let live = false;
+      try {
+        const res = await fetch("/api/health");
+        live = Boolean(((await res.json()) as { live?: boolean }).live);
+      } catch {
+        live = false;
+      }
+      if (cancelled) return;
+      useCrewStore.getState().setLiveMode(live);
+      cleanup = startSimulation(live);
+    })();
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, []);
 }

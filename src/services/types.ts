@@ -18,6 +18,15 @@ export interface Task {
   estimateMin: number;
   tags: string[];
   projectId?: string;
+  /** Tâches (ids) dont le livrable est requis avant de commencer. */
+  dependsOnIds?: string[];
+  /** Résultat produit par l'agent (markdown) en mode live. */
+  deliverable?: string;
+  /** Origine : créée par la simulation ou via un plan validé. */
+  source?: "sim" | "live";
+  /** Tentatives d'exécution (live) — au-delà de 2, dispatch manuel requis. */
+  attempts?: number;
+  error?: string;
   createdAt: number;
   startedAt?: number;
   reviewAt?: number;
@@ -47,8 +56,15 @@ export interface Plan {
   id: string;
   request: string;
   summary: string;
+  /** Nom de projet proposé par Atlas (mode live). */
+  projectName?: string;
   tasks: PlannedTask[];
 }
+
+/** Réponse d'Atlas dans le chat : une question/réponse, ou un plan à valider. */
+export type AtlasReply =
+  | { type: "text"; text: string }
+  | { type: "plan"; text: string; plan: Plan };
 
 /**
  * Couche d'orchestration. V1 : SimulatedOrchestrator (mock).

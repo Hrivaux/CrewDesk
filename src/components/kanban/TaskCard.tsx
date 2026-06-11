@@ -42,7 +42,17 @@ function CardBody({ task }: { task: Task }) {
             {tag}
           </span>
         ))}
-        <span className="ml-auto font-mono text-[9px] text-muted tabular-nums">
+        <span className="ml-auto flex items-center gap-1.5 font-mono text-[9px] text-muted tabular-nums">
+          {task.deliverable ? (
+            <span title="Livrable disponible — cliquer pour l'ouvrir" style={{ color: def.color }}>
+              ▣
+            </span>
+          ) : null}
+          {task.error ? (
+            <span title={task.error} style={{ color: "#FF8A4C" }}>
+              !
+            </span>
+          ) : null}
           ~{task.estimateMin} min
         </span>
       </div>
@@ -91,6 +101,7 @@ export function TaskCard({ task }: { task: Task }) {
   );
   const removeCelebration = useCrewStore((s) => s.removeCelebration);
   const setHoveredAgent = useCrewStore((s) => s.setHoveredAgent);
+  const setSelectedTask = useCrewStore((s) => s.setSelectedTask);
   const linked = useCrewStore((s) => s.hoveredAgent === task.agentId);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -104,6 +115,7 @@ export function TaskCard({ task }: { task: Task }) {
       {...attributes}
       onPointerEnter={() => setHoveredAgent(task.agentId)}
       onPointerLeave={() => setHoveredAgent(null)}
+      onClick={() => setSelectedTask(task.id)}
       className={`focus-ring relative touch-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
       <motion.article

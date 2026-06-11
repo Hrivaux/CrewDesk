@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useMounted } from "@/lib/useMounted";
+import { useCrewStore } from "@/stores/useCrewStore";
 import { Chip } from "@/components/ui/Chip";
 
 function Clock() {
@@ -59,6 +61,23 @@ const NAV = [
   { href: "/projects", label: "Projets" },
 ] as const;
 
+function ModeChip() {
+  const mounted = useMounted();
+  const live = useCrewStore((s) => s.liveMode);
+  if (!mounted) return <Chip>· · ·</Chip>;
+  return live ? (
+    <Chip color="#3CDFA0">
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#3CDFA0] shadow-[0_0_6px_#3CDFA0]" />
+      Live · Claude
+    </Chip>
+  ) : (
+    <Chip color="#FFB35C">
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber shadow-[0_0_6px_#FFB35C]" />
+      Simulation
+    </Chip>
+  );
+}
+
 export function TopBar() {
   const pathname = usePathname();
 
@@ -98,10 +117,7 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-4">
         <Clock />
-        <Chip color="#5EE7FF">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_6px_#5EE7FF]" />
-          Simulation · v1
-        </Chip>
+        <ModeChip />
       </div>
     </motion.header>
   );

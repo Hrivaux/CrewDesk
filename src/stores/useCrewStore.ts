@@ -39,6 +39,10 @@ export interface CrewState {
   selectedAgent: AgentId | null;
   /** Agent mis en évidence par survol (carte kanban ↔ sprite de la scène). */
   hoveredAgent: AgentId | null;
+  /** Tâche ouverte dans le panneau de détail (livrable, description). */
+  selectedTask: string | null;
+  /** Vrai quand la clé API est configurée : les agents travaillent réellement. */
+  liveMode: boolean;
   completedTotal: number;
 
   /* --- Chat avec Atlas --- */
@@ -94,7 +98,11 @@ export interface CrewState {
   beginWork: (agentId: AgentId) => void;
   setTaskProgress: (taskId: string, progress: number) => void;
   /** Travail achevé : la carte part en revue, l'agent rentre en zone pause. */
-  sendToReview: (taskId: string) => void;
+  sendToReview: (taskId: string, deliverable?: string) => void;
+  /** Échec d'exécution (live) : la carte retourne au backlog, l'agent rentre. */
+  failTask: (taskId: string, message: string) => void;
+  setSelectedTask: (id: string | null) => void;
+  setLiveMode: (live: boolean) => void;
   /** Atlas valide la revue : carte « Terminé » + confettis. */
   approveTask: (taskId: string) => void;
   /** Déplacement manuel d'une carte (drag & drop) avec effets sur la scène. */
@@ -203,6 +211,8 @@ export const useCrewStore = create<CrewState>()(
       celebrations: [],
       selectedAgent: null,
       hoveredAgent: null,
+      selectedTask: null,
+      liveMode: false,
       completedTotal: 0,
       chatMessages: [],
       planning: false,
@@ -433,7 +443,7 @@ export const useCrewStore = create<CrewState>()(
           ),
         })),
 
-      sendToReview: (taskId) => {
+      sendToReview: (taskId, deliverable) => {
         const s = get();
         const task = s.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -443,7 +453,14 @@ export const useCrewStore = create<CrewState>()(
         set({
           tasks: s.tasks.map((t) =>
             t.id === taskId
-              ? { ...t, status: "review", progress: 100, reviewAt: Date.now() }
+              ? {
+                  ...t,
+                  status: "review",
+                  progress: 100,
+                  reviewAt: Date.now(),
+                  deliverable: deliverable ?? t.deliverable,
+                  error: undefined,
+                }
               : t,
           ),
           agents: releasing
@@ -630,6 +647,59 @@ export const useCrewStore = create<CrewState>()(
             return;
         }
       },
+
+      failTask: (taskId, message) => {
+        const s = get();
+        const task = s.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+        const rt = s.agents[task.agentId];
+        const def = AGENT_BY_ID[task.agentId];
+        const releasing = rt.taskId === taskId;
+        set({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  status: "backlog",
+                  progress: 0,
+                  startedAt: undefined,
+                  attempts: (t.attempts ?? 0) + 1,
+                  error: message,
+                }
+              : t,
+          ),
+          agents: releasing
+            ? {
+                ...s.agents,
+                [task.agentId]: {
+                  ...rt,
+                  status: "returning",
+                  taskId: null,
+                  pose: returnPose(rt, task.agentId),
+                },
+              }
+            : s.agents,
+          toasts: [
+            ...s.toasts,
+            {
+              id: uid("toast"),
+              title: `Échec — ${def.name}`,
+              message,
+              color: "#FF8A4C",
+            },
+          ].slice(-4),
+          activity: pushActivity(
+            s.activity,
+            "system",
+            `Échec de « ${task.title} » : ${message}`,
+            task.agentId,
+          ),
+        });
+      },
+
+      setSelectedTask: (id) => set({ selectedTask: id }),
+
+      setLiveMode: (liveMode) => set({ liveMode }),
 
       settleAgent: (agentId) => {
         const s = get();
