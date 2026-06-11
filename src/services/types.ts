@@ -96,3 +96,13 @@ export interface Celebration {
   taskId: string;
   color: string;
 }
+
+/** Message du chat avec Atlas. */
+export interface ChatMessage {
+  id: string;
+  role: "user" | "atlas";
+  text: string;
+  at: number;
+  /** Si ce message porte un plan (affiché tant qu'il est en attente). */
+  planId?: string;
+}

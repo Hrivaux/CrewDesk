@@ -8,7 +8,9 @@ import type {
   AgentId,
   AgentRuntime,
   Celebration,
+  ChatMessage,
   DispatchFx,
+  Plan,
   Project,
   Task,
   TaskStatus,
@@ -34,6 +36,22 @@ export interface CrewState {
   /** Agent mis en évidence par survol (carte kanban ↔ sprite de la scène). */
   hoveredAgent: AgentId | null;
   completedTotal: number;
+
+  /* --- Chat avec Atlas --- */
+  chatMessages: ChatMessage[];
+  /** Atlas analyse la demande (indicateur de frappe). */
+  planning: boolean;
+  /** Plan proposé, en attente de validation/édition. */
+  pendingPlan: Plan | null;
+
+  addChatMessage: (msg: Omit<ChatMessage, "id" | "at">) => void;
+  setPlanning: (planning: boolean) => void;
+  setPendingPlan: (plan: Plan | null) => void;
+  reassignPendingTask: (index: number, agentId: AgentId) => void;
+  updatePendingTaskTitle: (index: number, title: string) => void;
+  removePendingTask: (index: number) => void;
+  /** Création unitaire par Atlas (pipeline de validation du plan). */
+  addTask: (task: Task) => void;
 
   seedTasks: (tasks: Task[]) => void;
   seedProjects: (projects: Project[]) => void;
@@ -91,6 +109,73 @@ export const useCrewStore = create<CrewState>()(
       selectedAgent: null,
       hoveredAgent: null,
       completedTotal: 0,
+      chatMessages: [],
+      planning: false,
+      pendingPlan: null,
+
+      addChatMessage: (msg) =>
+        set((s) => ({
+          chatMessages: [
+            ...s.chatMessages,
+            { ...msg, id: uid("msg"), at: Date.now() },
+          ].slice(-40),
+        })),
+
+      setPlanning: (planning) => set({ planning }),
+
+      setPendingPlan: (plan) => set({ pendingPlan: plan }),
+
+      reassignPendingTask: (index, agentId) =>
+        set((s) => {
+          if (!s.pendingPlan) return s;
+          return {
+            pendingPlan: {
+              ...s.pendingPlan,
+              tasks: s.pendingPlan.tasks.map((t, i) =>
+                i === index ? { ...t, agentId } : t,
+              ),
+            },
+          };
+        }),
+
+      updatePendingTaskTitle: (index, title) =>
+        set((s) => {
+          if (!s.pendingPlan || title.trim() === "") return s;
+          return {
+            pendingPlan: {
+              ...s.pendingPlan,
+              tasks: s.pendingPlan.tasks.map((t, i) =>
+                i === index ? { ...t, title: title.trim() } : t,
+              ),
+            },
+          };
+        }),
+
+      removePendingTask: (index) =>
+        set((s) => {
+          if (!s.pendingPlan) return s;
+          const tasks = s.pendingPlan.tasks
+            .filter((_, i) => i !== index)
+            // Réindexe les dépendances après suppression.
+            .map((t) => ({
+              ...t,
+              dependsOn: t.dependsOn
+                ?.filter((d) => d !== index)
+                .map((d) => (d > index ? d - 1 : d)),
+            }));
+          return { pendingPlan: { ...s.pendingPlan, tasks } };
+        }),
+
+      addTask: (task) =>
+        set((s) => ({
+          tasks: [...s.tasks, task],
+          activity: pushActivity(
+            s.activity,
+            "system",
+            `Atlas a créé « ${task.title} »`,
+            task.agentId,
+          ),
+        })),
 
       seedTasks: (tasks) =>
         set((s) => ({
@@ -395,6 +480,7 @@ export const useCrewStore = create<CrewState>()(
         tasks: s.tasks,
         projects: s.projects,
         activity: s.activity,
+        chatMessages: s.chatMessages,
         completedTotal: s.completedTotal,
       }),
       // Au rechargement : les tâches en cours retournent en backlog pour être redistribuées.
@@ -410,6 +496,7 @@ export const useCrewStore = create<CrewState>()(
           tasks,
           projects: p.projects ?? [],
           activity: p.activity ?? [],
+          chatMessages: p.chatMessages ?? [],
           completedTotal: p.completedTotal ?? 0,
         };
       },

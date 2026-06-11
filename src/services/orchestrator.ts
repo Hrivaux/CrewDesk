@@ -17,6 +17,28 @@ interface DomainTemplate {
 
 const DOMAINS: DomainTemplate[] = [
   {
+    keywords: ["email", "emailing", "mailing", "séquence", "sequence", "onboarding"],
+    summary: "Campagne d'emailing : segmentation, rédaction, design, automatisation et planification.",
+    tasks: [
+      { title: "Segmentation de l'audience", description: "Définir les segments et les déclencheurs de chaque email.", agentId: "sonar", estimateMin: 18, tags: ["recherche"] },
+      { title: "Rédaction de la séquence", description: "5 emails : accroche, valeur, objections, preuve, offre.", agentId: "plume", estimateMin: 35, tags: ["contenu"], dependsOn: [0] },
+      { title: "Template email responsive", description: "Design sobre, lisible en mode sombre et clair.", agentId: "pixel", estimateMin: 22, tags: ["design"] },
+      { title: "Automatisation des envois", description: "Brancher la séquence sur les événements produit.", agentId: "forge", estimateMin: 25, tags: ["dev"], dependsOn: [1, 2] },
+      { title: "Calendrier et A/B tests", description: "Cadence d'envoi et variantes d'objets à tester.", agentId: "vega", estimateMin: 15, tags: ["planning"], dependsOn: [1] },
+    ],
+  },
+  {
+    keywords: ["événement", "evenement", "webinaire", "conférence", "conference", "meetup", "lancement"],
+    summary: "Organisation d'événement : cadrage, rétroplanning, inscription, visuels et communication.",
+    tasks: [
+      { title: "Benchmark d'événements similaires", description: "Formats, durées et taux de participation observés.", agentId: "sonar", estimateMin: 20, tags: ["recherche"] },
+      { title: "Rétroplanning détaillé", description: "Jalons, responsabilités et points de contrôle.", agentId: "vega", estimateMin: 22, tags: ["planning"], dependsOn: [0] },
+      { title: "Page d'inscription", description: "Formulaire, confirmation et rappels automatiques.", agentId: "forge", estimateMin: 28, tags: ["dev"], dependsOn: [1] },
+      { title: "Kit visuel de l'événement", description: "Bannières, visuels réseaux et écran d'accueil.", agentId: "pixel", estimateMin: 24, tags: ["design"], dependsOn: [1] },
+      { title: "Communications avant/après", description: "Annonces, relances et email de remerciement.", agentId: "plume", estimateMin: 20, tags: ["contenu"], dependsOn: [1] },
+    ],
+  },
+  {
     keywords: ["landing", "site", "page", "web", "app", "application"],
     summary: "Création d'un site web : recherche, design, intégration, contenu et lancement.",
     tasks: [
@@ -59,6 +81,29 @@ const FALLBACK: DomainTemplate = {
   ],
 };
 
+const STOPWORDS = new Set([
+  "je", "tu", "on", "nous", "vous", "veux", "voudrais", "aimerais", "souhaite",
+  "peux", "dois", "lancer", "lance", "créer", "cree", "crée", "faire", "fais",
+  "prépare", "prepare", "organise", "organiser", "mettre", "besoin", "aide",
+  "stp", "svp", "un", "une", "le", "la", "les", "des", "de", "du", "et", "ou",
+  "à", "a", "au", "aux", "pour", "sur", "avec", "dans", "mon", "ma", "mes",
+  "ton", "ta", "tes", "son", "sa", "ses", "notre", "nos", "votre", "vos",
+  "ce", "cet", "cette", "ces", "que", "qui", "est", "sont", "ne", "pas",
+  "plus", "très", "tres", "aussi", "nouveau", "nouvelle", "petit", "petite",
+]);
+
+/** Extrait le sujet d'une demande en langage naturel (« app de fitness »…). */
+export function extractTopic(request: string): string {
+  const words = request
+    .toLowerCase()
+    .replace(/[«»"'’,.;:!?()]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1 && !STOPWORDS.has(w));
+  if (words.length === 0) return "Nouveau projet";
+  const topic = words.slice(0, 5).join(" ");
+  return topic.charAt(0).toUpperCase() + topic.slice(1);
+}
+
 let planSeq = 0;
 
 export class SimulatedOrchestrator implements IOrchestrator {
@@ -71,12 +116,106 @@ export class SimulatedOrchestrator implements IOrchestrator {
       id: `plan_${Date.now().toString(36)}_${planSeq}`,
       request,
       summary: domain.summary,
-      tasks: domain.tasks,
+      // Copie défensive : le plan en attente est éditable dans le chat.
+      tasks: domain.tasks.map((t) => ({ ...t, tags: [...t.tags] })),
     };
   }
 }
 
 export const orchestrator: IOrchestrator = new SimulatedOrchestrator();
+
+/* -------------------------------------------------------------------------- */
+/*  Pipeline du chat : Atlas analyse, propose un plan, puis le déploie.        */
+/* -------------------------------------------------------------------------- */
+
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+const PROJECT_COLORS = ["#5EE7FF", "#A777FF", "#3CDFA0", "#FFC94D", "#FF8A4C", "#4D8DFF"];
+
+/** L'utilisateur décrit son besoin ; Atlas répond avec un plan validable. */
+export async function askAtlas(request: string): Promise<void> {
+  const store = useCrewStore.getState();
+  store.addChatMessage({ role: "user", text: request });
+  useCrewStore.getState().setPendingPlan(null);
+  useCrewStore.getState().setPlanning(true);
+
+  await wait(1300 + Math.random() * 900);
+
+  const plan = await orchestrator.plan(request);
+  const topic = extractTopic(request);
+  const s = useCrewStore.getState();
+  s.setPlanning(false);
+  s.setPendingPlan(plan);
+  s.addChatMessage({
+    role: "atlas",
+    text: `Voici ce que je propose pour « ${topic} » — ${plan.tasks.length} tâches réparties sur l'équipe. Ajuste ce qu'il faut, puis valide.`,
+    planId: plan.id,
+  });
+}
+
+/** Validation : projet créé, cartes une par une, dispatch en cascade. */
+export async function validatePlan(): Promise<void> {
+  const store = useCrewStore.getState();
+  const plan = store.pendingPlan;
+  if (!plan || plan.tasks.length === 0) return;
+
+  const topic = extractTopic(plan.request);
+  const color =
+    PROJECT_COLORS[store.projects.length % PROJECT_COLORS.length] ?? "#5EE7FF";
+  const project: Project = {
+    id: `proj_${Date.now().toString(36)}`,
+    name: topic,
+    objective: plan.request,
+    color,
+    deadline: Date.now() + 14 * DAY_MS,
+    createdAt: Date.now(),
+  };
+
+  store.setPendingPlan(null);
+  store.seedProjects([project]);
+  store.addChatMessage({
+    role: "atlas",
+    text: `C'est parti. Je crée le projet « ${project.name} » et je briefe l'équipe…`,
+  });
+
+  // Création séquencée des cartes : le backlog se remplit sous les yeux.
+  const createdIds: string[] = [];
+  for (const t of plan.tasks) {
+    await wait(420);
+    const task = makeTask({
+      title: t.title,
+      description: t.description,
+      agentId: t.agentId,
+      estimateMin: t.estimateMin,
+      tags: t.tags,
+      projectId: project.id,
+    });
+    createdIds.push(task.id);
+    useCrewStore.getState().addTask(task);
+  }
+
+  // Dispatch en cascade : Atlas lance les paquets vers les agents libres,
+  // la simulation prend le relais pour la suite.
+  createdIds.forEach((id, i) => {
+    window.setTimeout(() => useCrewStore.getState().dispatchTask(id), 600 + i * 750);
+  });
+
+  useCrewStore.getState().addChatMessage({
+    role: "atlas",
+    text: `Plan lancé : ${plan.tasks.length} tâches au board. L'équipe s'y met — suis la progression dans la scène ou le kanban.`,
+  });
+}
+
+/** Abandon du plan proposé. */
+export function cancelPlan(): void {
+  const store = useCrewStore.getState();
+  if (!store.pendingPlan) return;
+  store.setPendingPlan(null);
+  store.addChatMessage({
+    role: "atlas",
+    text: "Plan annulé. Reformule ton besoin quand tu veux, je proposerai autre chose.",
+  });
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Simulation — fait vivre la scène : dispatch, progression, rotation.        */

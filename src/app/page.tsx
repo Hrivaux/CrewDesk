@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { ChatDock } from "@/components/chat/ChatDock";
 import { Diorama } from "@/components/scene/Diorama";
 import { SidePanel } from "@/components/hud/SidePanel";
 import { TopBar } from "@/components/hud/TopBar";
@@ -42,6 +43,7 @@ export default function Home() {
       </main>
 
       <BoardOverlay open={boardOpen} onClose={() => setBoardOpen(false)} />
+      <ChatDock />
     </div>
   );
 }
