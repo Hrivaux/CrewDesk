@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { AgentId, IOrchestrator, Plan, PlannedTask, Task } from "@/services/types";
+import type { IOrchestrator, Plan, PlannedTask, Project, Task } from "@/services/types";
 import { useCrewStore } from "@/stores/useCrewStore";
 
 /* -------------------------------------------------------------------------- */
@@ -82,23 +82,50 @@ export const orchestrator: IOrchestrator = new SimulatedOrchestrator();
 /*  Simulation — fait vivre la scène : dispatch, progression, rotation.        */
 /* -------------------------------------------------------------------------- */
 
+const PROJECT_BETA = "proj_beta";
+const PROJECT_SITE = "proj_site";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function seedProjects(): Project[] {
+  const now = Date.now();
+  return [
+    {
+      id: PROJECT_BETA,
+      name: "Lancement bêta CrewDesk",
+      objective: "Ouvrir la bêta privée à 200 utilisateurs avec un produit stable et désirable.",
+      color: "#5EE7FF",
+      deadline: now + 12 * DAY_MS,
+      createdAt: now,
+    },
+    {
+      id: PROJECT_SITE,
+      name: "Site vitrine & contenu",
+      objective: "Publier le site marketing, le blog et la séquence d'emails de lancement.",
+      color: "#A777FF",
+      deadline: now + 21 * DAY_MS,
+      createdAt: now,
+    },
+  ];
+}
+
 const SEED_BATCHES: ReadonlyArray<ReadonlyArray<Omit<Task, "id" | "status" | "progress" | "createdAt">>> = [
   [
-    { title: "Maquette du dashboard analytics", description: "Vue d'ensemble avec graphiques temps réel et mode sombre.", agentId: "pixel", estimateMin: 18, tags: ["design", "ui"] },
-    { title: "API de synchronisation kanban", description: "Endpoints REST pour créer et déplacer les cartes.", agentId: "forge", estimateMin: 24, tags: ["dev", "api"] },
-    { title: "Analyse concurrentielle", description: "Benchmark des 5 outils de gestion d'agents IA du marché.", agentId: "sonar", estimateMin: 15, tags: ["recherche"] },
-    { title: "Page « Fonctionnalités » du site", description: "Rédaction orientée bénéfices, ton premium.", agentId: "plume", estimateMin: 12, tags: ["contenu"] },
-    { title: "Calendrier de lancement bêta", description: "Jalons, liste d'attente et séquence d'emails.", agentId: "vega", estimateMin: 14, tags: ["planning"] },
-    { title: "Icônes du design system", description: "Set de 24 icônes cohérentes, grille 24px.", agentId: "pixel", estimateMin: 16, tags: ["design"] },
-    { title: "Optimisation des requêtes", description: "Réduire le temps de réponse médian sous 80 ms.", agentId: "forge", estimateMin: 20, tags: ["dev", "perf"] },
+    { title: "Maquette du dashboard analytics", description: "Vue d'ensemble avec graphiques temps réel et mode sombre.", agentId: "pixel", estimateMin: 18, tags: ["design", "ui"], projectId: PROJECT_BETA },
+    { title: "API de synchronisation kanban", description: "Endpoints REST pour créer et déplacer les cartes.", agentId: "forge", estimateMin: 24, tags: ["dev", "api"], projectId: PROJECT_BETA },
+    { title: "Analyse concurrentielle", description: "Benchmark des 5 outils de gestion d'agents IA du marché.", agentId: "sonar", estimateMin: 15, tags: ["recherche"], projectId: PROJECT_BETA },
+    { title: "Page « Fonctionnalités » du site", description: "Rédaction orientée bénéfices, ton premium.", agentId: "plume", estimateMin: 12, tags: ["contenu"], projectId: PROJECT_SITE },
+    { title: "Calendrier de lancement bêta", description: "Jalons, liste d'attente et séquence d'emails.", agentId: "vega", estimateMin: 14, tags: ["planning"], projectId: PROJECT_BETA },
+    { title: "Icônes du design system", description: "Set de 24 icônes cohérentes, grille 24px.", agentId: "pixel", estimateMin: 16, tags: ["design"], projectId: PROJECT_SITE },
+    { title: "Optimisation des requêtes", description: "Réduire le temps de réponse médian sous 80 ms.", agentId: "forge", estimateMin: 20, tags: ["dev", "perf"], projectId: PROJECT_BETA },
   ],
   [
-    { title: "Sondage utilisateurs bêta", description: "Questionnaire de satisfaction et analyse des verbatims.", agentId: "sonar", estimateMin: 14, tags: ["recherche"] },
-    { title: "Newsletter de juin", description: "Annonce des nouveautés et étude de cas client.", agentId: "plume", estimateMin: 12, tags: ["contenu"] },
-    { title: "Animations d'onboarding", description: "Micro-interactions du premier lancement.", agentId: "pixel", estimateMin: 18, tags: ["design", "motion"] },
-    { title: "Tests end-to-end du kanban", description: "Couvrir le drag & drop et la synchronisation temps réel.", agentId: "forge", estimateMin: 22, tags: ["dev", "tests"] },
-    { title: "Plan réseaux sociaux S26", description: "Calendrier éditorial et visuels associés.", agentId: "vega", estimateMin: 12, tags: ["marketing"] },
-    { title: "Veille tarification SaaS", description: "Modèles de pricing des concurrents directs.", agentId: "sonar", estimateMin: 13, tags: ["recherche"] },
+    { title: "Sondage utilisateurs bêta", description: "Questionnaire de satisfaction et analyse des verbatims.", agentId: "sonar", estimateMin: 14, tags: ["recherche"], projectId: PROJECT_BETA },
+    { title: "Newsletter de juin", description: "Annonce des nouveautés et étude de cas client.", agentId: "plume", estimateMin: 12, tags: ["contenu"], projectId: PROJECT_SITE },
+    { title: "Animations d'onboarding", description: "Micro-interactions du premier lancement.", agentId: "pixel", estimateMin: 18, tags: ["design", "motion"], projectId: PROJECT_BETA },
+    { title: "Tests end-to-end du kanban", description: "Couvrir le drag & drop et la synchronisation temps réel.", agentId: "forge", estimateMin: 22, tags: ["dev", "tests"], projectId: PROJECT_BETA },
+    { title: "Plan réseaux sociaux S26", description: "Calendrier éditorial et visuels associés.", agentId: "vega", estimateMin: 12, tags: ["marketing"], projectId: PROJECT_SITE },
+    { title: "Veille tarification SaaS", description: "Modèles de pricing des concurrents directs.", agentId: "sonar", estimateMin: 13, tags: ["recherche"], projectId: PROJECT_SITE },
   ],
 ];
 
@@ -119,6 +146,8 @@ const TICK_MS = 600;
 const DISPATCH_COOLDOWN_MS = 3200;
 /** 1 minute estimée ≈ 1,4 s de simulation. */
 const SIM_MS_PER_MIN = 1400;
+/** Temps de relecture par Atlas avant validation. */
+const REVIEW_MS = 4800;
 
 export function startSimulation(): () => void {
   const store = useCrewStore;
@@ -126,7 +155,10 @@ export function startSimulation(): () => void {
   let emptySince: number | null = null;
   let batchIndex = 0;
 
-  // Seed initial si le backlog est vide au premier lancement.
+  // Seed initial si tout est vide au premier lancement.
+  if (store.getState().projects.length === 0) {
+    store.getState().seedProjects(seedProjects());
+  }
   if (store.getState().tasks.length === 0) {
     const batch = SEED_BATCHES[0];
     if (batch) store.getState().seedTasks(batch.map(makeTask));
@@ -144,22 +176,35 @@ export function startSimulation(): () => void {
       }
     }
 
-    // 2. Progression des tâches en cours.
+    // 2. Progression des tâches en cours ; à 100 % → revue.
     const fresh = store.getState();
     for (const task of fresh.tasks) {
       if (task.status !== "in_progress") continue;
+      const carrier = fresh.agents[task.agentId];
+      if (carrier.taskId !== task.id || carrier.status !== "working") continue;
       const totalMs = task.estimateMin * SIM_MS_PER_MIN;
       const delta = (TICK_MS / totalMs) * 100 * (0.7 + Math.random() * 0.6);
       const next = task.progress + delta;
-      if (next >= 100) fresh.finishTask(task.id);
+      if (next >= 100) fresh.sendToReview(task.id);
       else fresh.setTaskProgress(task.id, next);
     }
 
-    // 3. Dispatch : Atlas assigne une tâche du backlog à un spécialiste libre.
+    // 3. Revue : Atlas valide après relecture.
+    for (const task of store.getState().tasks) {
+      if (task.status === "review" && now >= (task.reviewAt ?? now) + REVIEW_MS) {
+        store.getState().approveTask(task.id);
+      }
+    }
+
+    // 4. Dispatch : Atlas pioche dans le backlog, et reprend les cartes
+    //    « Assigné » en attente (déplacées à la main vers un agent occupé).
     const cur = store.getState();
     if (now - lastDispatch >= DISPATCH_COOLDOWN_MS) {
       const next = cur.tasks.find(
-        (t) => t.status === "backlog" && cur.agents[t.agentId].status === "idle",
+        (t) =>
+          (t.status === "backlog" || t.status === "assigned") &&
+          cur.agents[t.agentId].status === "idle" &&
+          !cur.agents[t.agentId].taskId,
       );
       if (next) {
         cur.dispatchTask(next.id);
@@ -167,7 +212,7 @@ export function startSimulation(): () => void {
       }
     }
 
-    // 4. Backlog épuisé et équipe au repos : nouvelle vague après une pause.
+    // 5. Tout est terminé : nouvelle vague après une pause.
     const after = store.getState();
     const pending = after.tasks.some((t) => t.status !== "done");
     if (!pending && after.tasks.length > 0) {

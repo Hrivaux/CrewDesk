@@ -17,9 +17,21 @@ export interface Task {
   /** Estimation affichée, en minutes (la simulation la compresse). */
   estimateMin: number;
   tags: string[];
+  projectId?: string;
   createdAt: number;
   startedAt?: number;
+  reviewAt?: number;
   completedAt?: number;
+}
+
+/** Un projet = un objectif + ses tâches (reliées par projectId). */
+export interface Project {
+  id: string;
+  name: string;
+  objective: string;
+  color: string;
+  deadline: number;
+  createdAt: number;
 }
 
 export interface PlannedTask {
@@ -46,7 +58,7 @@ export interface IOrchestrator {
   plan(request: string): Promise<Plan>;
 }
 
-export type ActivityKind = "dispatch" | "start" | "done" | "system";
+export type ActivityKind = "dispatch" | "start" | "review" | "done" | "system";
 
 export interface ActivityEvent {
   id: string;
@@ -76,4 +88,11 @@ export interface DispatchFx {
   to: AgentId;
   color: string;
   taskTitle: string;
+}
+
+/** Micro-célébration (confettis) quand une carte atteint « Terminé ». */
+export interface Celebration {
+  id: string;
+  taskId: string;
+  color: string;
 }

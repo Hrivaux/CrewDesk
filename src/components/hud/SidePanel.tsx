@@ -1,20 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { AGENTS, AGENT_BY_ID } from "@/lib/agents";
+import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { ActivityFeed } from "@/components/hud/ActivityFeed";
 import { AgentRow } from "@/components/hud/AgentRow";
 import { Chip } from "@/components/ui/Chip";
 import { Panel, PanelHeader } from "@/components/ui/Panel";
 import { Stat } from "@/components/ui/Stat";
-
-function useMounted(): boolean {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  return mounted;
-}
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 14 },

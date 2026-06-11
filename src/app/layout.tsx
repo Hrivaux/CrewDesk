@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
+import { SimulationRunner } from "@/components/SimulationRunner";
 import "./globals.css";
 
 const sora = Sora({
@@ -34,7 +35,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${sora.variable} ${inter.variable} ${jetbrains.variable}`}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <SimulationRunner />
+        {children}
+      </body>
     </html>
   );
 }

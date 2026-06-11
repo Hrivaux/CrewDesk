@@ -8,6 +8,7 @@ import { useCrewStore } from "@/stores/useCrewStore";
 const KIND_ICON: Record<ActivityKind, string> = {
   dispatch: "→",
   start: "▶",
+  review: "◇",
   done: "✓",
   system: "◆",
 };
