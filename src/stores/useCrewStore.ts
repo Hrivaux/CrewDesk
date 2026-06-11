@@ -211,7 +211,7 @@ export const useCrewStore = create<CrewState>()(
       agentStats: initialStats(),
       toasts: [],
       queuePressure: false,
-      scenePhase: "auto",
+      scenePhase: "day",
       sceneTheme: "mission-control",
       onboardingDone: false,
       chatOpen: false,
@@ -684,7 +684,7 @@ export const useCrewStore = create<CrewState>()(
           chatMessages: p.chatMessages ?? [],
           completedTotal: p.completedTotal ?? 0,
           agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
-          scenePhase: p.scenePhase ?? "auto",
+          scenePhase: p.scenePhase ?? "day",
           sceneTheme: p.sceneTheme ?? "mission-control",
           onboardingDone: p.onboardingDone ?? false,
         };
