@@ -18,7 +18,9 @@ export function AgentRow({ def }: { def: AgentDef }) {
     rt.taskId ? s.tasks.find((t) => t.id === rt.taskId) : undefined,
   );
   const selected = useCrewStore((s) => s.selectedAgent === def.id);
+  const hovered = useCrewStore((s) => s.hoveredAgent === def.id);
   const selectAgent = useCrewStore((s) => s.selectAgent);
+  const setHoveredAgent = useCrewStore((s) => s.setHoveredAgent);
 
   const active = rt.status === "working";
 
@@ -26,10 +28,14 @@ export function AgentRow({ def }: { def: AgentDef }) {
     <button
       type="button"
       onClick={() => selectAgent(selected ? null : def.id)}
+      onPointerEnter={() => setHoveredAgent(def.id)}
+      onPointerLeave={() => setHoveredAgent(null)}
       className={`focus-ring group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors duration-150 ${
         selected
           ? "border-[rgba(94,231,255,0.35)] bg-[rgba(94,231,255,0.06)]"
-          : "border-transparent hover:bg-[rgba(234,240,248,0.04)]"
+          : hovered
+            ? "border-transparent bg-[rgba(234,240,248,0.05)]"
+            : "border-transparent hover:bg-[rgba(234,240,248,0.04)]"
       }`}
     >
       {/* Avatar miniature */}

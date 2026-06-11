@@ -1,18 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import { LayoutGroup } from "framer-motion";
 import type { Task, TaskStatus } from "@/services/types";
 import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { COLUMNS, KanbanColumn } from "@/components/kanban/KanbanColumn";
+import { TaskCardPreview } from "@/components/kanban/TaskCard";
 
 const DONE_VISIBLE = 10;
 
@@ -35,20 +39,31 @@ export function KanbanBoard() {
   const mounted = useMounted();
   const tasks = useCrewStore((s) => s.tasks);
   const moveTask = useCrewStore((s) => s.moveTask);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor),
   );
 
+  const onDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id));
+
   const onDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
     const to = event.over?.id as TaskStatus | undefined;
     const taskId = String(event.active.id);
     if (to) moveTask(taskId, to);
   };
 
+  const activeTask = activeId ? tasks.find((t) => t.id === activeId) : undefined;
+
   return (
-    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveId(null)}
+    >
       <LayoutGroup>
         <div className="flex h-full snap-x gap-3 overflow-x-auto pb-1">
           {COLUMNS.map((column) => {
@@ -70,6 +85,9 @@ export function KanbanBoard() {
           })}
         </div>
       </LayoutGroup>
+      <DragOverlay dropAnimation={null}>
+        {activeTask ? <TaskCardPreview task={activeTask} /> : null}
+      </DragOverlay>
     </DndContext>
   );
 }

@@ -1,8 +1,43 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useDroppable } from "@dnd-kit/core";
 import type { Task, TaskStatus } from "@/services/types";
 import { TaskCard } from "@/components/kanban/TaskCard";
+
+/** Slot d'accueil en pointillés marchants, affiché pendant le survol d'un drag. */
+function DropSlot({ accent }: { accent: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 64 }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+      className="relative shrink-0 overflow-hidden rounded-xl"
+    >
+      <svg className="absolute inset-0 h-full w-full" aria-hidden>
+        <rect
+          x="1"
+          y="1"
+          rx="10"
+          fill={`${accent}0D`}
+          stroke={accent}
+          strokeWidth="1.5"
+          strokeDasharray="7 5"
+          className="march"
+          style={{ width: "calc(100% - 2px)", height: "calc(100% - 2px)" }}
+        />
+      </svg>
+      <span
+        className="absolute inset-0 grid place-items-center font-mono text-[9px] tracking-[0.18em] uppercase"
+        style={{ color: accent }}
+      >
+        déposer ici
+      </span>
+    </motion.div>
+  );
+}
 
 export interface ColumnSpec {
   status: TaskStatus;
@@ -28,11 +63,19 @@ interface KanbanColumnProps {
 export function KanbanColumn({ column, tasks, total }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.status });
 
+  // Pulse de la colonne quand une carte arrive (compteur qui augmente).
+  const prevTotal = useRef(total);
+  const [pulseKey, setPulseKey] = useState(0);
+  useEffect(() => {
+    if (total > prevTotal.current) setPulseKey((k) => k + 1);
+    prevTotal.current = total;
+  }, [total]);
+
   return (
     <section
       ref={setNodeRef}
       aria-label={`Colonne ${column.label}`}
-      className="glass flex h-full w-60 shrink-0 snap-start flex-col rounded-2xl transition-shadow duration-200"
+      className="glass relative flex h-full w-60 shrink-0 snap-start flex-col rounded-2xl transition-shadow duration-200"
       style={
         isOver
           ? {
@@ -41,6 +84,19 @@ export function KanbanColumn({ column, tasks, total }: KanbanColumnProps) {
           : undefined
       }
     >
+      {pulseKey > 0 ? (
+        <motion.span
+          key={pulseKey}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-10 rounded-2xl"
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          style={{
+            boxShadow: `inset 0 0 0 1.5px ${column.accent}88, 0 0 30px ${column.accent}33`,
+          }}
+        />
+      ) : null}
       <header className="flex items-center justify-between px-3 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <span
@@ -60,7 +116,8 @@ export function KanbanColumn({ column, tasks, total }: KanbanColumnProps) {
         {tasks.map((task) => (
           <TaskCard key={task.id} task={task} />
         ))}
-        {tasks.length === 0 ? (
+        <AnimatePresence>{isOver ? <DropSlot accent={column.accent} /> : null}</AnimatePresence>
+        {tasks.length === 0 && !isOver ? (
           <div
             className="grid flex-1 place-items-center rounded-xl border border-dashed border-[rgba(234,240,248,0.07)]"
             style={{ minHeight: 90 }}

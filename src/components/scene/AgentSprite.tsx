@@ -21,7 +21,9 @@ const BLINK_DELAYS = [0, 1.4, 0.6, 2.1, 0.9, 1.7];
  */
 export function AgentSprite({ def, onRef }: AgentSpriteProps) {
   const selected = useCrewStore((s) => s.selectedAgent === def.id);
+  const hovered = useCrewStore((s) => s.hoveredAgent === def.id);
   const selectAgent = useCrewStore((s) => s.selectAgent);
+  const setHoveredAgent = useCrewStore((s) => s.setHoveredAgent);
 
   const initial = project(def.isOrchestrator ? def.workSpot : def.idleSpot);
   const blinkDelay =
@@ -41,6 +43,7 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
       data-facing="right"
       data-walking="0"
       data-selected={selected ? "1" : "0"}
+      data-hovered={hovered ? "1" : "0"}
       style={{
         ...vars,
         transform: `translate3d(${initial.x}px, ${initial.y}px, 0)`,
@@ -49,13 +52,15 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
       }}
     >
       <div className="agent-tile" />
-      {selected ? <SelectionRing /> : null}
+      {selected || hovered ? <SelectionRing /> : null}
       <div className="agent-shadow" />
       <button
         type="button"
         className="agent-wrap focus-ring"
         aria-label={`${def.name} — ${def.role}`}
         onClick={() => selectAgent(selected ? null : def.id)}
+        onPointerEnter={() => setHoveredAgent(def.id)}
+        onPointerLeave={() => setHoveredAgent(null)}
         style={{ background: "none", border: "none", padding: 0 }}
       >
         <div className="agent-bob">

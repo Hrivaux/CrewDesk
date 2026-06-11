@@ -31,6 +31,8 @@ export interface CrewState {
   dispatchesFx: DispatchFx[];
   celebrations: Celebration[];
   selectedAgent: AgentId | null;
+  /** Agent mis en évidence par survol (carte kanban ↔ sprite de la scène). */
+  hoveredAgent: AgentId | null;
   completedTotal: number;
 
   seedTasks: (tasks: Task[]) => void;
@@ -49,6 +51,7 @@ export interface CrewState {
   /** Fin du trajet retour. */
   settleAgent: (agentId: AgentId) => void;
   selectAgent: (id: AgentId | null) => void;
+  setHoveredAgent: (id: AgentId | null) => void;
   removeDispatchFx: (id: string) => void;
   removeCelebration: (id: string) => void;
   log: (kind: ActivityKind, message: string, agentId?: AgentId | null) => void;
@@ -86,6 +89,7 @@ export const useCrewStore = create<CrewState>()(
       dispatchesFx: [],
       celebrations: [],
       selectedAgent: null,
+      hoveredAgent: null,
       completedTotal: 0,
 
       seedTasks: (tasks) =>
@@ -371,6 +375,8 @@ export const useCrewStore = create<CrewState>()(
       },
 
       selectAgent: (id) => set({ selectedAgent: id }),
+
+      setHoveredAgent: (id) => set({ hoveredAgent: id }),
 
       removeDispatchFx: (id) =>
         set((s) => ({ dispatchesFx: s.dispatchesFx.filter((d) => d.id !== id) })),
