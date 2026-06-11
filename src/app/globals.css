@@ -243,6 +243,64 @@ body {
   transform: translate(-50%, -50%);
 }
 
+/* Reflets satinés au sol sous les objets lumineux. */
+.floor-refl {
+  position: absolute;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: blur(3px);
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent 80%);
+}
+
+.floor-refl--holo {
+  left: 0;
+  top: 5px;
+  width: 84px;
+  height: 38px;
+  opacity: 0.4;
+  background:
+    repeating-linear-gradient(90deg, rgba(94, 231, 255, 0.55) 0 9px, rgba(94, 231, 255, 0.14) 9px 16px),
+    linear-gradient(180deg, rgba(77, 141, 255, 0.3), transparent);
+}
+
+.floor-refl--monitor {
+  left: 0;
+  top: 3px;
+  width: 40px;
+  height: 22px;
+  opacity: 0.45;
+  background: linear-gradient(180deg, rgba(94, 231, 255, 0.5), rgba(255, 138, 76, 0.10) 70%, transparent);
+}
+
+.floor-refl--server {
+  left: 0;
+  top: 3px;
+  width: 30px;
+  height: 22px;
+  opacity: 0.4;
+  background: linear-gradient(180deg, rgba(60, 223, 160, 0.45), transparent);
+}
+
+.floor-refl--kiosk {
+  left: 0;
+  top: 3px;
+  width: 20px;
+  height: 15px;
+  opacity: 0.4;
+  background: linear-gradient(180deg, rgba(167, 119, 255, 0.5), transparent);
+}
+
+.floor-refl--coffee {
+  left: 0;
+  top: 3px;
+  width: 22px;
+  height: 12px;
+  opacity: 0.32;
+  background: linear-gradient(180deg, rgba(255, 179, 92, 0.5), transparent);
+}
+
 /* Bureau : plateau iso + écran qui scrolle du code. */
 .desk-top {
   position: absolute;
@@ -513,6 +571,38 @@ body {
   will-change: transform;
 }
 
+/* Tuile lumineuse sous les pieds de l'agent en mission. */
+.agent-tile {
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  width: 32px;
+  height: 32px;
+  transform: scaleY(0.5) rotate(45deg);
+  border-radius: 4px;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--ac) 45%, transparent),
+    transparent 72%
+  );
+  box-shadow:
+    0 0 16px color-mix(in oklab, var(--ac) 35%, transparent),
+    inset 0 0 0 1px color-mix(in oklab, var(--ac) 55%, transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.agent[data-status="working"] .agent-tile {
+  opacity: 1;
+  animation: tile-breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes tile-breathe {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.5; }
+}
+
 .agent-shadow {
   position: absolute;
   left: -13px;
@@ -589,6 +679,38 @@ body {
     inset -4px -5px 10px rgba(0, 0, 0, 0.35),
     inset 2px 3px 6px rgba(255, 255, 255, 0.25),
     0 0 16px color-mix(in oklab, var(--ac) 35%, transparent);
+}
+
+/* Lueur d'écran projetée sur l'agent quand il travaille. */
+.agent-torso::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 38% 42%,
+    rgba(94, 231, 255, 0.5),
+    rgba(94, 231, 255, 0.12) 55%,
+    transparent 78%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.agent[data-status="working"] .agent-torso::before {
+  opacity: 1;
+  animation: screen-flicker 3.4s linear infinite;
+}
+
+@keyframes screen-flicker {
+  0%, 100% { opacity: 0.85; }
+  9% { opacity: 0.55; }
+  13% { opacity: 0.9; }
+  34% { opacity: 0.68; }
+  52% { opacity: 0.95; }
+  71% { opacity: 0.6; }
+  84% { opacity: 0.82; }
 }
 
 .agent--atlas .agent-torso {
@@ -784,6 +906,8 @@ body {
   .agent-ring,
   .agent-antenna::after,
   .agent-eye,
+  .agent-tile,
+  .agent-torso::before,
   .led,
   .kiosk-dot {
     animation: none !important;

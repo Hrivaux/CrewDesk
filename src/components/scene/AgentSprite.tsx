@@ -48,6 +48,7 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
           10 + depth(def.isOrchestrator ? def.workSpot : def.idleSpot),
       }}
     >
+      <div className="agent-tile" />
       {selected ? <SelectionRing /> : null}
       <div className="agent-shadow" />
       <button

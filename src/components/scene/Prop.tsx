@@ -39,6 +39,7 @@ function PropBody({ kind }: { kind: PropKind }) {
       return (
         <>
           <div className="prop-shadow" style={{ width: 86, height: 34, top: -16 }} />
+          <div className="floor-refl floor-refl--monitor" />
           <div className="desk-top" />
           <div className="monitor">
             <div className="code-screen" />
@@ -49,6 +50,7 @@ function PropBody({ kind }: { kind: PropKind }) {
       return (
         <>
           <div className="prop-shadow" style={{ width: 44, height: 18, top: -4 }} />
+          <div className="floor-refl floor-refl--server" />
           <div className="server">
             {LED_COLORS.map((c, i) => (
               <span
@@ -70,6 +72,7 @@ function PropBody({ kind }: { kind: PropKind }) {
       return (
         <>
           <div className="prop-shadow" style={{ width: 96, height: 22, top: -2 }} />
+          <div className="floor-refl floor-refl--holo" />
           <div className="holo">
             {BAR_HEIGHTS.map((h, i) => (
               <span
@@ -85,6 +88,7 @@ function PropBody({ kind }: { kind: PropKind }) {
       return (
         <>
           <div className="prop-shadow" style={{ width: 36, height: 14, top: -3 }} />
+          <div className="floor-refl floor-refl--kiosk" />
           <div className="kiosk">
             <div className="kiosk-screen" />
             <div className="kiosk-dot" />
@@ -95,6 +99,7 @@ function PropBody({ kind }: { kind: PropKind }) {
       return (
         <>
           <div className="prop-shadow" style={{ width: 38, height: 15, top: -3 }} />
+          <div className="floor-refl floor-refl--coffee" />
           <div className="coffee">
             {[0, 0.9, 1.7].map((d, i) => (
               <span key={i} className="steam" style={{ "--delay": `${d}s` } as CSSProperties} />
