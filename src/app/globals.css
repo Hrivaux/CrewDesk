@@ -159,15 +159,16 @@ body {
   transform: scaleY(0.5) rotate(45deg);
   border-radius: 10px;
   background:
-    radial-gradient(45% 45% at 26% 30%, rgba(77, 141, 255, 0.13), transparent 70%),
-    radial-gradient(40% 40% at 76% 74%, rgba(255, 179, 92, 0.10), transparent 70%),
-    linear-gradient(to right, rgba(94, 231, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(94, 231, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(145deg, #1a2433 0%, #141c29 48%, #101724 100%);
-  background-size: auto, auto, 10% 10%, 10% 10%, auto;
+    radial-gradient(62% 62% at 50% 42%, rgba(94, 231, 255, 0.06), transparent 75%),
+    radial-gradient(45% 45% at 26% 30%, rgba(77, 141, 255, 0.17), transparent 70%),
+    radial-gradient(40% 40% at 76% 74%, rgba(255, 179, 92, 0.13), transparent 70%),
+    linear-gradient(to right, rgba(94, 231, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(94, 231, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(145deg, #253246 0%, #1c2636 48%, #172030 100%);
+  background-size: auto, auto, auto, 10% 10%, 10% 10%, auto;
   box-shadow:
-    inset 0 0 0 1px rgba(94, 231, 255, 0.14),
-    inset 0 0 60px rgba(7, 9, 14, 0.55);
+    inset 0 0 0 1.5px rgba(94, 231, 255, 0.24),
+    inset 0 0 70px rgba(7, 9, 14, 0.4);
 }
 
 /* Tranches de la dalle (épaisseur). Pente iso 2:1 → atan(0,5) ≈ 26,565°. */
@@ -182,8 +183,8 @@ body {
   left: 0;
   top: 50%;
   transform: skewY(26.565deg);
-  background: linear-gradient(180deg, #0d141e 0%, #0a0f16 100%);
-  border-left: 1px solid rgba(94, 231, 255, 0.10);
+  background: linear-gradient(180deg, #131c29 0%, #0c121b 100%);
+  border-left: 1px solid rgba(94, 231, 255, 0.14);
   border-radius: 0 0 0 6px;
 }
 
@@ -191,8 +192,8 @@ body {
   left: 50%;
   top: 100%;
   transform: skewY(-26.565deg);
-  background: linear-gradient(180deg, #121a26 0%, #0c121b 100%);
-  border-right: 1px solid rgba(94, 231, 255, 0.08);
+  background: linear-gradient(180deg, #18222f 0%, #0f1620 100%);
+  border-right: 1px solid rgba(94, 231, 255, 0.12);
   border-radius: 0 0 6px 0;
 }
 
@@ -206,6 +207,48 @@ body {
   background: radial-gradient(50% 50% at 50% 50%, rgba(94, 231, 255, 0.30), transparent 70%);
   filter: blur(34px);
   pointer-events: none;
+}
+
+/* Murs vitrés du fond : pente iso 2:1, fenêtres sur la nuit. */
+.wall {
+  position: absolute;
+  width: 50%;
+  height: var(--wall-h, 84px);
+  transform-origin: 0 100%;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(94, 231, 255, 0.10) 0 1px, transparent 1px 33px),
+    linear-gradient(180deg, rgba(94, 231, 255, 0.05), rgba(13, 19, 28, 0.40) 65%, rgba(13, 19, 28, 0.62));
+  border-top: 1px solid rgba(94, 231, 255, 0.22);
+  box-shadow: inset 0 -16px 24px rgba(7, 9, 14, 0.4);
+}
+
+.wall--nw {
+  left: 0;
+  top: calc(50% - var(--wall-h, 84px));
+  transform: skewY(-26.565deg);
+  border-left: 1px solid rgba(94, 231, 255, 0.18);
+}
+
+.wall--ne {
+  left: 50%;
+  top: calc(var(--wall-h, 84px) * -1);
+  transform: skewY(26.565deg);
+  border-right: 1px solid rgba(94, 231, 255, 0.12);
+}
+
+.wall-sign {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(94, 231, 255, 0.65);
+  text-shadow: 0 0 14px rgba(94, 231, 255, 0.8);
+  white-space: nowrap;
 }
 
 .radar-ring {
@@ -231,6 +274,8 @@ body {
 
 .prop {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -301,7 +346,7 @@ body {
   background: linear-gradient(180deg, rgba(255, 179, 92, 0.5), transparent);
 }
 
-/* Bureau : plateau iso + écran qui scrolle du code. */
+/* Poste de travail : plateau iso avec épaisseur, double écran, clavier, mug. */
 .desk-top {
   position: absolute;
   width: 74px;
@@ -310,22 +355,67 @@ body {
   top: -55px;
   transform: scaleY(0.5) rotate(45deg);
   border-radius: 6px;
-  background: linear-gradient(145deg, #232f41, #19222f);
+  background: linear-gradient(145deg, #283549, #1c2533);
   box-shadow:
-    inset 0 0 0 1px rgba(234, 240, 248, 0.07),
+    inset 0 0 0 1px rgba(234, 240, 248, 0.09),
     0 18px 18px -10px rgba(0, 0, 0, 0.5);
+}
+
+.desk-top--under {
+  top: -48px;
+  background: #0d141f;
+  box-shadow: none;
+  border-radius: 8px;
+}
+
+.keyboard {
+  position: absolute;
+  left: -10px;
+  top: -47px;
+  width: 19px;
+  height: 19px;
+  transform: scaleY(0.5) rotate(45deg);
+  border-radius: 2px;
+  background:
+    linear-gradient(to right, rgba(234, 240, 248, 0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(234, 240, 248, 0.10) 1px, transparent 1px),
+    #131c28;
+  background-size: 25% 25%, 25% 25%, auto;
+  box-shadow: inset 0 0 0 1px rgba(234, 240, 248, 0.10);
+}
+
+.mug {
+  position: absolute;
+  left: 15px;
+  top: -57px;
+  width: 7px;
+  height: 8px;
+  border-radius: 1px 1px 2px 2px;
+  background: linear-gradient(180deg, #eaf0f8, #b9c5d6);
+}
+
+.mug::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  width: 3px;
+  height: 4px;
+  border: 1px solid #b9c5d6;
+  border-left: none;
+  border-radius: 0 3px 3px 0;
 }
 
 .monitor {
   position: absolute;
-  left: -21px;
-  top: -76px;
-  width: 42px;
-  height: 30px;
+  left: -30px;
+  top: -80px;
+  width: 44px;
+  height: 31px;
   border-radius: 4px;
   background: #0a0f16;
-  border: 1px solid rgba(234, 240, 248, 0.12);
-  box-shadow: 0 0 18px rgba(94, 231, 255, 0.18);
+  border: 1px solid rgba(234, 240, 248, 0.14);
+  box-shadow: 0 0 18px rgba(94, 231, 255, 0.2);
 }
 
 .monitor::after {
@@ -337,6 +427,14 @@ body {
   height: 8px;
   transform: translateX(-50%);
   background: #1a2433;
+}
+
+.monitor--side {
+  left: 12px;
+  top: -72px;
+  width: 28px;
+  height: 21px;
+  box-shadow: 0 0 12px rgba(77, 141, 255, 0.18);
 }
 
 .code-screen {
@@ -367,13 +465,22 @@ body {
   to { transform: translateY(-33.33%); }
 }
 
-/* Rack serveur à LEDs. */
+/* Variante apaisée (second écran) : bleu, défilement lent. */
+.code-screen--calm::before {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(77, 141, 255, 0.5) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(0deg, rgba(94, 231, 255, 0.3) 0 1px, transparent 1px 9px);
+  background-size: 75% 100%, 55% 100%;
+  animation-duration: 11s;
+}
+
+/* Rack serveur à LEDs, grilles d'aération. */
 .server {
   position: absolute;
   left: -16px;
-  top: -64px;
+  top: -68px;
   width: 32px;
-  height: 56px;
+  height: 60px;
   border-radius: 5px;
   background: linear-gradient(165deg, #1c2635, #111924);
   border: 1px solid rgba(234, 240, 248, 0.1);
@@ -383,6 +490,21 @@ body {
   gap: 4px 5px;
   padding: 7px 6px;
   align-content: start;
+}
+
+.server::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  height: 11px;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(234, 240, 248, 0.13) 0 1px,
+    transparent 1px 3px
+  );
+  border-radius: 2px;
 }
 
 .led {
@@ -495,17 +617,46 @@ body {
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
-/* Machine à café + vapeur. */
+/* Cafétéria : comptoir iso, machine à café, mugs, vapeur. */
+.counter-top {
+  position: absolute;
+  width: 86px;
+  height: 86px;
+  left: -43px;
+  top: -58px;
+  transform: scaleY(0.5) rotate(45deg);
+  border-radius: 7px;
+  background: linear-gradient(145deg, #33291d, #221a10);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 179, 92, 0.16),
+    0 18px 18px -10px rgba(0, 0, 0, 0.5);
+}
+
+.counter-top--under {
+  top: -50px;
+  background: #14100a;
+  box-shadow: none;
+  border-radius: 9px;
+}
+
+.cafe-mug {
+  position: absolute;
+  width: 6px;
+  height: 7px;
+  border-radius: 1px 1px 2px 2px;
+  background: linear-gradient(180deg, #eaf0f8, #b9c5d6);
+}
+
 .coffee {
   position: absolute;
-  left: -13px;
-  top: -42px;
+  left: -32px;
+  top: -86px;
   width: 26px;
   height: 34px;
   border-radius: 5px;
   background: linear-gradient(165deg, #2a2017, #191209);
-  border: 1px solid rgba(255, 179, 92, 0.25);
-  box-shadow: 0 12px 14px -8px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 179, 92, 0.12);
+  border: 1px solid rgba(255, 179, 92, 0.3);
+  box-shadow: 0 0 14px rgba(255, 179, 92, 0.14);
 }
 
 .coffee::after {
@@ -537,6 +688,172 @@ body {
   0% { transform: translate3d(-50%, 0, 0) scale(0.6); opacity: 0; }
   25% { opacity: 0.7; }
   100% { transform: translate3d(calc(-50% + 6px), -26px, 0) scale(1.7); opacity: 0; }
+}
+
+/* Frigo. */
+.fridge {
+  position: absolute;
+  left: -12px;
+  top: -46px;
+  width: 24px;
+  height: 42px;
+  border-radius: 4px;
+  background: linear-gradient(165deg, #243043, #161e2b);
+  border: 1px solid rgba(234, 240, 248, 0.12);
+  box-shadow: 0 14px 14px -9px rgba(0, 0, 0, 0.5);
+}
+
+.fridge::before {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 5px;
+  width: 2px;
+  height: 9px;
+  border-radius: 2px;
+  background: rgba(234, 240, 248, 0.4);
+}
+
+.fridge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15px;
+  height: 1px;
+  background: rgba(7, 9, 14, 0.7);
+}
+
+/* Tabouret de cafétéria. */
+.stool-seat {
+  position: absolute;
+  left: -8px;
+  top: -22px;
+  width: 16px;
+  height: 16px;
+  transform: scaleY(0.5) rotate(45deg);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffc98a, #b97a3e);
+  box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.stool-leg {
+  position: absolute;
+  left: -1.5px;
+  top: -14px;
+  width: 3px;
+  height: 13px;
+  background: linear-gradient(180deg, #2a3347, #161e2b);
+}
+
+/* Canapé du lounge. */
+.sofa-base {
+  position: absolute;
+  left: -30px;
+  top: -28px;
+  width: 60px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #313c54, #222c3f);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.07), 0 14px 14px -9px rgba(0, 0, 0, 0.5);
+}
+
+.sofa-base::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 3px;
+  width: 1px;
+  background: rgba(7, 9, 14, 0.55);
+}
+
+.sofa-back {
+  position: absolute;
+  left: -30px;
+  top: -42px;
+  width: 60px;
+  height: 17px;
+  border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, #2a3449, #1d2636);
+  border-top: 1px solid rgba(167, 119, 255, 0.35);
+}
+
+.sofa-arm {
+  position: absolute;
+  top: -36px;
+  width: 9px;
+  height: 24px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #34405a, #232d41);
+}
+
+.sofa-arm--l { left: -37px; }
+.sofa-arm--r { right: -37px; }
+
+/* Bibliothèque : étagères de livres colorés. */
+.shelf {
+  position: absolute;
+  left: -15px;
+  top: -62px;
+  width: 30px;
+  height: 56px;
+  border-radius: 3px;
+  background: #1a2433;
+  border: 1px solid rgba(234, 240, 248, 0.11);
+  box-shadow: 0 14px 14px -9px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+}
+
+.shelf-row {
+  flex: 1;
+  border-radius: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #4d8dff 0 3px,
+    #0c121b 3px 4px,
+    #a777ff 4px 7px,
+    #0c121b 7px 8px,
+    #3cdfa0 8px 11px,
+    #0c121b 11px 13px,
+    #ffc94d 13px 16px,
+    #0c121b 16px 18px
+  );
+  border-bottom: 1px solid rgba(7, 9, 14, 0.8);
+}
+
+/* Tapis : losange au sol, motif tissé. */
+.rug {
+  position: absolute;
+  left: calc(var(--rug-s, 100px) / -2);
+  top: calc(var(--rug-s, 100px) / -2);
+  width: var(--rug-s, 100px);
+  height: var(--rug-s, 100px);
+  transform: scaleY(0.5) rotate(45deg);
+  border-radius: 10px;
+  border: 1px solid color-mix(in oklab, var(--rug-c, #5ee7ff) 30%, transparent);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--rug-c, #5ee7ff) 8%, transparent) 0 10px,
+      transparent 10px 20px
+    ),
+    color-mix(in oklab, var(--rug-c, #5ee7ff) 5%, transparent);
+}
+
+/* Marquage peint au sol. */
+.floor-decal {
+  position: absolute;
+  transform: translate(-50%, -50%) scaleY(0.5) rotate(45deg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(94, 231, 255, 0.30);
+  white-space: nowrap;
 }
 
 /* Plante. */
@@ -949,6 +1266,7 @@ body {
 .scene[data-phase="day"] .board-top { filter: brightness(1.3) saturate(0.92); }
 .scene[data-phase="day"] .board-edge { filter: brightness(1.3); }
 .scene[data-phase="day"] .board-halo { opacity: 0.6; }
+.scene[data-phase="day"] .wall { filter: brightness(1.3); }
 .scene[data-phase="day"] .dust { background: rgba(255, 214, 156, 0.55); }
 
 /* ----------------------- Entrée en scène séquencée ------------------------ */

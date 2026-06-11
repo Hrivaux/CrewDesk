@@ -2,7 +2,7 @@ import { BOARD_H, BOARD_W, SLAB_T } from "@/lib/iso";
 
 /**
  * La dalle isométrique : face supérieure carrelée (carré projeté en losange 2:1),
- * tranches d'épaisseur, halo cyan flottant et anneau radar.
+ * tranches d'épaisseur, murs vitrés du fond, halo cyan flottant et anneau radar.
  */
 export function Platform() {
   return (
@@ -14,6 +14,10 @@ export function Platform() {
       <div className="board-edge board-edge--w" style={{ zIndex: 1 }} />
       <div className="board-edge board-edge--e" style={{ zIndex: 1 }} />
       <div className="board-top" style={{ zIndex: 2 }} />
+      <div className="wall wall--nw" style={{ zIndex: 3 }}>
+        <span className="wall-sign">CrewDesk · HQ</span>
+      </div>
+      <div className="wall wall--ne" style={{ zIndex: 3 }} />
       <div className="radar-ring" style={{ zIndex: 4 }} />
     </div>
   );
