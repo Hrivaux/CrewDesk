@@ -124,12 +124,16 @@ function PropBody({ kind }: { kind: PropKind }) {
   }
 }
 
-export function Prop({ spec }: { spec: PropSpec }) {
+export function Prop({ spec, index = 0 }: { spec: PropSpec; index?: number }) {
   const p = project(spec.pos);
   return (
     <div
       className="prop"
-      style={{ transform: `translate3d(${p.x}px, ${p.y}px, 0)`, zIndex: 10 + depth(spec.pos) }}
+      style={{
+        transform: `translate3d(${p.x}px, ${p.y}px, 0)`,
+        zIndex: 10 + depth(spec.pos),
+        ["--enter-delay" as string]: `${index * 0.09}s`,
+      }}
     >
       <PropBody kind={spec.kind} />
     </div>

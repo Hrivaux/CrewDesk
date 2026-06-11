@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
+import { CommandPalette } from "@/components/CommandPalette";
 import { SimulationRunner } from "@/components/SimulationRunner";
+import { ToastHost } from "@/components/hud/ToastHost";
 import "./globals.css";
 
 const sora = Sora({
@@ -38,6 +40,8 @@ export default function RootLayout({
       <body className="antialiased">
         <SimulationRunner />
         {children}
+        <ToastHost />
+        <CommandPalette />
       </body>
     </html>
   );

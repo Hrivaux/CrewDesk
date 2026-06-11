@@ -42,8 +42,25 @@ export function Diorama() {
   const [dust, setDust] = useState<DustSpec[] | null>(null);
   const dispatchesFx = useCrewStore((s) => s.dispatchesFx);
   const atlasBurst = useCrewStore((s) => s.atlasBurst);
+  const scenePhase = useCrewStore((s) => s.scenePhase);
+  const [hour, setHour] = useState<number | null>(null);
 
   useEffect(() => setDust(makeDust(16)), []);
+
+  // Cycle jour/nuit : suit l'heure réelle quand la phase est « auto ».
+  useEffect(() => {
+    const update = () => setHour(new Date().getHours());
+    update();
+    const id = window.setInterval(update, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const phase =
+    scenePhase === "auto"
+      ? hour !== null && hour >= 7 && hour < 19
+        ? "day"
+        : "night"
+      : scenePhase;
 
   // Parallaxe douce au pointeur + échelle adaptée au conteneur.
   useEffect(() => {
@@ -83,17 +100,26 @@ export function Diorama() {
     };
   }, []);
 
-  // Boucle d'animation des agents (positions, orientation, profondeur).
+  // Boucle d'animation des agents (positions, orientation, profondeur),
+  // plus la détection de croisements : les agents se saluent.
+  const greetState = useRef({
+    cooldown: new Map<string, number>(),
+    activeUntil: new Map<AgentId, number>(),
+  });
+
   useEffect(() => {
     let raf = 0;
     const tick = () => {
       const now = Date.now();
       const { agents } = useCrewStore.getState();
+      const positions: Partial<Record<AgentId, { gx: number; gy: number; moving: boolean }>> = {};
+
       for (const def of AGENTS) {
         const el = agentRefs.current[def.id];
         if (!el) continue;
         const rt = agents[def.id];
         const { pos, facing, moving } = agentRender(rt, def, now);
+        positions[def.id] = { ...pos, moving };
         const p = project(pos);
         el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
         el.style.zIndex = String(10 + depth(pos));
@@ -103,6 +129,35 @@ export function Diorama() {
         if (el.dataset.facing !== facing) el.dataset.facing = facing;
         if (el.dataset.status !== rt.status) el.dataset.status = rt.status;
       }
+
+      // Salutations : deux agents en mouvement qui se frôlent se font signe.
+      const greet = greetState.current;
+      for (let i = 0; i < AGENTS.length; i++) {
+        for (let j = i + 1; j < AGENTS.length; j++) {
+          const a = AGENTS[i];
+          const b = AGENTS[j];
+          if (!a || !b) continue;
+          const pa = positions[a.id];
+          const pb = positions[b.id];
+          if (!pa || !pb || (!pa.moving && !pb.moving)) continue;
+          const pairKey = `${a.id}:${b.id}`;
+          if ((greet.cooldown.get(pairKey) ?? 0) > now) continue;
+          if (Math.hypot(pa.gx - pb.gx, pa.gy - pb.gy) < 0.9) {
+            greet.cooldown.set(pairKey, now + 7000);
+            greet.activeUntil.set(a.id, now + 900);
+            greet.activeUntil.set(b.id, now + 900);
+          }
+        }
+      }
+      for (const def of AGENTS) {
+        const el = agentRefs.current[def.id];
+        if (!el) continue;
+        const active = (greet.activeUntil.get(def.id) ?? 0) > now;
+        if (el.dataset.greet !== (active ? "1" : "0")) {
+          el.dataset.greet = active ? "1" : "0";
+        }
+      }
+
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -110,7 +165,12 @@ export function Diorama() {
   }, []);
 
   return (
-    <div ref={sceneRef} className="scene h-full w-full" aria-label="Diorama de l'équipe">
+    <div
+      ref={sceneRef}
+      className="scene h-full w-full"
+      data-phase={phase}
+      aria-label="Diorama de l'équipe"
+    >
       <div className="scene-nebula" />
       <div className="scene-lamp" />
 
@@ -133,13 +193,14 @@ export function Diorama() {
         <div className="platform-float">
           <div className="relative" style={{ width: BOARD_W, height: BOARD_H }}>
             <Platform />
-            {PROPS.map((spec) => (
-              <Prop key={spec.id} spec={spec} />
+            {PROPS.map((spec, i) => (
+              <Prop key={spec.id} spec={spec} index={i} />
             ))}
-            {AGENTS.map((def) => (
+            {AGENTS.map((def, i) => (
               <AgentSprite
                 key={def.id}
                 def={def}
+                index={i}
                 onRef={(el) => {
                   if (el) agentRefs.current[def.id] = el;
                   else delete agentRefs.current[def.id];

@@ -9,6 +9,8 @@ import { SelectionRing } from "@/components/scene/SelectionRing";
 
 interface AgentSpriteProps {
   def: AgentDef;
+  /** Ordre d'entrée en scène (animation séquencée au montage). */
+  index: number;
   /** Enregistre l'élément racine auprès de la boucle rAF du diorama. */
   onRef: (el: HTMLDivElement | null) => void;
 }
@@ -19,9 +21,12 @@ const BLINK_DELAYS = [0, 1.4, 0.6, 2.1, 0.9, 1.7];
  * Le sprite d'un agent-robot. La position (transform/z-index) est pilotée
  * en impératif par la boucle rAF du Diorama — aucun re-render par frame.
  */
-export function AgentSprite({ def, onRef }: AgentSpriteProps) {
+export function AgentSprite({ def, index, onRef }: AgentSpriteProps) {
   const selected = useCrewStore((s) => s.selectedAgent === def.id);
   const hovered = useCrewStore((s) => s.hoveredAgent === def.id);
+  const pacing = useCrewStore((s) =>
+    def.isOrchestrator ? s.queuePressure : false,
+  );
   const selectAgent = useCrewStore((s) => s.selectAgent);
   const setHoveredAgent = useCrewStore((s) => s.setHoveredAgent);
 
@@ -33,6 +38,7 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
     "--ac": def.color,
     "--aw": def.isOrchestrator ? "42px" : "32px",
     "--ah": def.isOrchestrator ? "64px" : "50px",
+    "--enter-delay": `${0.5 + index * 0.16}s`,
   } as CSSProperties;
 
   return (
@@ -44,6 +50,7 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
       data-walking="0"
       data-selected={selected ? "1" : "0"}
       data-hovered={hovered ? "1" : "0"}
+      data-pacing={pacing ? "1" : "0"}
       style={{
         ...vars,
         transform: `translate3d(${initial.x}px, ${initial.y}px, 0)`,
@@ -83,6 +90,9 @@ export function AgentSprite({ def, onRef }: AgentSpriteProps) {
       <div className="agent-tag">
         {def.name} · {def.role}
       </div>
+      <span className="agent-coffee" aria-hidden>
+        ☕
+      </span>
       <Bubble agentId={def.id} color={def.color} />
     </div>
   );

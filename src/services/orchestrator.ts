@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { IOrchestrator, Plan, PlannedTask, Project, Task } from "@/services/types";
+import { AGENT_BY_ID } from "@/lib/agents";
 import { useCrewStore } from "@/stores/useCrewStore";
 
 /* -------------------------------------------------------------------------- */
@@ -205,6 +206,11 @@ export async function validatePlan(): Promise<void> {
     role: "atlas",
     text: `Plan lancé : ${plan.tasks.length} tâches au board. L'équipe s'y met — suis la progression dans la scène ou le kanban.`,
   });
+  useCrewStore.getState().pushToast({
+    title: "Plan lancé ✦",
+    message: `${project.name} · ${plan.tasks.length} tâches`,
+    color,
+  });
 }
 
 /** Abandon du plan proposé. */
@@ -308,11 +314,19 @@ export function startSimulation(): () => void {
     const now = Date.now();
     const s = store.getState();
 
-    // 1. Transitions de déplacement (arrivée au poste / retour en zone pause).
+    // 1. Transitions de déplacement (arrivée au poste, à la machine à café,
+    //    ou retour en zone pause) et fin de pause café.
     for (const rt of Object.values(s.agents)) {
       if (rt.pose && now >= rt.pose.startedAt + rt.pose.duration) {
-        if (rt.status === "walking") s.beginWork(rt.id);
-        else if (rt.status === "returning") s.settleAgent(rt.id);
+        if (rt.status === "walking") {
+          if (rt.taskId) s.beginWork(rt.id);
+          else s.startBreak(rt.id);
+        } else if (rt.status === "returning") {
+          s.settleAgent(rt.id);
+        }
+      }
+      if (rt.status === "break" && rt.breakUntil && now >= rt.breakUntil) {
+        s.endBreak(rt.id);
       }
     }
 
@@ -352,7 +366,27 @@ export function startSimulation(): () => void {
       }
     }
 
-    // 5. Tout est terminé : nouvelle vague après une pause.
+    // 5. Ambiance : pauses café spontanées des agents désœuvrés, et
+    //    pression de file pour Atlas (il fait les cent pas au-delà de 4).
+    const amb = store.getState();
+    const waiting = amb.tasks.filter(
+      (t) => t.status === "backlog" || t.status === "assigned",
+    );
+    amb.setQueuePressure(waiting.length > 4);
+    const onBreak = Object.values(amb.agents).filter(
+      (a) => a.status === "break" || (a.status === "walking" && !a.taskId),
+    ).length;
+    if (onBreak < 2 && Math.random() < 0.012) {
+      const candidate = Object.values(amb.agents).find(
+        (a) =>
+          a.status === "idle" &&
+          !AGENT_BY_ID[a.id].isOrchestrator &&
+          !waiting.some((t) => t.agentId === a.id),
+      );
+      if (candidate) amb.sendToBreak(candidate.id);
+    }
+
+    // 6. Tout est terminé : nouvelle vague après une pause.
     const after = store.getState();
     const pending = after.tasks.some((t) => t.status !== "done");
     if (!pending && after.tasks.length > 0) {

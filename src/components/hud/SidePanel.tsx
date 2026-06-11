@@ -6,7 +6,6 @@ import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { ActivityFeed } from "@/components/hud/ActivityFeed";
 import { AgentRow } from "@/components/hud/AgentRow";
-import { Chip } from "@/components/ui/Chip";
 import { Panel, PanelHeader } from "@/components/ui/Panel";
 import { Stat } from "@/components/ui/Stat";
 
@@ -19,15 +18,12 @@ export function SidePanel() {
   const mounted = useMounted();
   const tasks = useCrewStore((s) => s.tasks);
   const completedTotal = useCrewStore((s) => s.completedTotal);
-  const selectedAgent = useCrewStore((s) => s.selectedAgent);
 
   const inProgress = tasks.filter((t) => t.status === "in_progress").length;
   const queued = tasks.filter((t) => t.status === "backlog" || t.status === "assigned").length;
   const activeAgents = useCrewStore(
     (s) => Object.values(s.agents).filter((a) => a.status === "working" && !AGENT_BY_ID[a.id].isOrchestrator).length,
   );
-
-  const selected = selectedAgent ? AGENT_BY_ID[selectedAgent] : null;
 
   return (
     <motion.aside
@@ -56,19 +52,6 @@ export function SidePanel() {
               <AgentRow key={def.id} def={def} />
             ))}
           </div>
-          {selected ? (
-            <div className="mx-3 mt-2 rounded-xl border border-[rgba(234,240,248,0.07)] bg-[rgba(7,9,14,0.45)] px-3 py-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-xs font-semibold" style={{ color: selected.color }}>
-                  {selected.name}
-                </span>
-                <Chip color={selected.color}>{selected.role}</Chip>
-              </div>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-muted italic">
-                « {selected.personality} »
-              </p>
-            </div>
-          ) : null}
         </Panel>
       </motion.div>
 

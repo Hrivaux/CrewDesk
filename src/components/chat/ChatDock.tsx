@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
@@ -9,7 +8,8 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 /** Bouton flottant + panneau : le point d'entrée vers Atlas. */
 export function ChatDock() {
   const mounted = useMounted();
-  const [open, setOpen] = useState(false);
+  const open = useCrewStore((s) => s.chatOpen);
+  const setOpen = useCrewStore((s) => s.setChatOpen);
   const hasPendingPlan = useCrewStore((s) => s.pendingPlan !== null);
 
   return (
@@ -21,7 +21,7 @@ export function ChatDock() {
         transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.4 }}
         whileHover={{ scale: 1.07 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(!open)}
         aria-label={open ? "Fermer le chat avec Atlas" : "Parler à Atlas"}
         aria-expanded={open}
         className="focus-ring fixed right-4 bottom-4 z-40 grid h-13 w-13 place-items-center rounded-full border border-cyan/40"

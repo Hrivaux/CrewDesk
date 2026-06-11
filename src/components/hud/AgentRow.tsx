@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<AgentStatus, string> = {
   walking: "en route",
   working: "en mission",
   returning: "retour",
+  break: "pause café",
 };
 
 export function AgentRow({ def }: { def: AgentDef }) {

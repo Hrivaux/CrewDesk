@@ -7,16 +7,20 @@ import type {
   ActivityKind,
   AgentId,
   AgentRuntime,
+  AgentStats,
   Celebration,
   ChatMessage,
   DispatchFx,
   Plan,
   Project,
+  ScenePhase,
   Task,
   TaskStatus,
+  Toast,
 } from "@/services/types";
-import { AGENT_BY_ID, agentRender, initialRuntime } from "@/lib/agents";
+import { AGENTS, AGENT_BY_ID, agentRender, breakSpot, initialRuntime } from "@/lib/agents";
 import { pathBetween, walkDuration } from "@/lib/iso";
+import { levelFromXp } from "@/lib/xp";
 import type { Pose } from "@/services/types";
 
 let seq = 0;
@@ -45,6 +49,32 @@ export interface CrewState {
   pendingPlan: Plan | null;
   /** Compteur d'ondes de commandement d'Atlas (validation de plan). */
   atlasBurst: number;
+
+  /* --- Progression, notifications, ambiance --- */
+  agentStats: Record<AgentId, AgentStats>;
+  toasts: Toast[];
+  /** Atlas fait les cent pas quand la file d'attente grossit. */
+  queuePressure: boolean;
+  scenePhase: ScenePhase;
+  sceneTheme: string;
+  onboardingDone: boolean;
+  /* --- État UI partagé (command palette, panneaux) --- */
+  chatOpen: boolean;
+  boardOverlayOpen: boolean;
+  replayOpen: boolean;
+
+  pushToast: (toast: Omit<Toast, "id">) => void;
+  removeToast: (id: string) => void;
+  setQueuePressure: (pressure: boolean) => void;
+  setScenePhase: (phase: ScenePhase) => void;
+  setOnboardingDone: () => void;
+  setChatOpen: (open: boolean) => void;
+  setBoardOverlayOpen: (open: boolean) => void;
+  setReplayOpen: (open: boolean) => void;
+  /** Pause café : trajet vers la machine, pause, puis retour. */
+  sendToBreak: (agentId: AgentId) => void;
+  startBreak: (agentId: AgentId) => void;
+  endBreak: (agentId: AgentId) => void;
 
   addChatMessage: (msg: Omit<ChatMessage, "id" | "at">) => void;
   setPlanning: (planning: boolean) => void;
@@ -100,6 +130,68 @@ function celebrationFor(task: Task): Celebration {
   return { id: uid("fete"), taskId: task.id, color: AGENT_BY_ID[task.agentId].color };
 }
 
+/** Borne l'historique : garde les 60 dernières tâches terminées. */
+function trimDone(tasks: Task[]): Task[] {
+  const done = tasks.filter((t) => t.status === "done");
+  if (done.length <= 60) return tasks;
+  const cutoff = done
+    .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0))
+    .slice(0, 60);
+  const keep = new Set(cutoff.map((t) => t.id));
+  return tasks.filter((t) => t.status !== "done" || keep.has(t.id));
+}
+
+function initialStats(): Record<AgentId, AgentStats> {
+  return Object.fromEntries(
+    AGENTS.map((a) => [a.id, { xp: 0, done: 0, history: [] as AgentStats["history"] }]),
+  ) as Record<AgentId, AgentStats>;
+}
+
+/** XP, historique et toasts à la complétion d'une tâche (+ niveau éventuel). */
+function completionUpdates(
+  s: CrewState,
+  task: Task,
+): Pick<CrewState, "agentStats" | "toasts"> {
+  const def = AGENT_BY_ID[task.agentId];
+  const stats = s.agentStats[task.agentId];
+  const before = levelFromXp(stats.xp);
+  const xp = stats.xp + Math.max(5, Math.round(task.estimateMin));
+  const after = levelFromXp(xp);
+
+  const toasts: Toast[] = [
+    ...s.toasts,
+    {
+      id: uid("toast"),
+      title: `${def.name} a terminé`,
+      message: `${task.title} ✓`,
+      color: def.color,
+    },
+  ];
+  if (after > before) {
+    toasts.push({
+      id: uid("toast"),
+      title: `${def.name} passe niveau ${after} ✦`,
+      message: def.personality,
+      color: def.color,
+    });
+  }
+
+  return {
+    agentStats: {
+      ...s.agentStats,
+      [task.agentId]: {
+        xp,
+        done: stats.done + 1,
+        history: [
+          { taskId: task.id, title: task.title, at: Date.now(), tags: [...task.tags] },
+          ...stats.history,
+        ].slice(0, 10),
+      },
+    },
+    toasts: toasts.slice(-4),
+  };
+}
+
 export const useCrewStore = create<CrewState>()(
   persist(
     (set, get) => ({
@@ -116,6 +208,87 @@ export const useCrewStore = create<CrewState>()(
       planning: false,
       pendingPlan: null,
       atlasBurst: 0,
+      agentStats: initialStats(),
+      toasts: [],
+      queuePressure: false,
+      scenePhase: "auto",
+      sceneTheme: "mission-control",
+      onboardingDone: false,
+      chatOpen: false,
+      boardOverlayOpen: false,
+      replayOpen: false,
+
+      pushToast: (toast) =>
+        set((s) => ({ toasts: [...s.toasts, { ...toast, id: uid("toast") }].slice(-4) })),
+
+      removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+      setQueuePressure: (queuePressure) => {
+        if (get().queuePressure !== queuePressure) set({ queuePressure });
+      },
+
+      setScenePhase: (scenePhase) => set({ scenePhase }),
+
+      setOnboardingDone: () => set({ onboardingDone: true }),
+
+      setChatOpen: (chatOpen) => set({ chatOpen }),
+
+      setBoardOverlayOpen: (boardOverlayOpen) => set({ boardOverlayOpen }),
+
+      setReplayOpen: (replayOpen) => set({ replayOpen }),
+
+      sendToBreak: (agentId) => {
+        const s = get();
+        const rt = s.agents[agentId];
+        if (rt.status !== "idle" || rt.taskId) return;
+        const def = AGENT_BY_ID[agentId];
+        const from = agentRender(rt, def, Date.now()).pos;
+        const path = pathBetween(from, breakSpot(def));
+        set({
+          agents: {
+            ...s.agents,
+            [agentId]: {
+              ...rt,
+              status: "walking",
+              pose: { path, startedAt: Date.now(), duration: walkDuration(path) },
+            },
+          },
+        });
+      },
+
+      startBreak: (agentId) => {
+        const s = get();
+        const rt = s.agents[agentId];
+        if (rt.status !== "walking" || rt.taskId) return;
+        set({
+          agents: {
+            ...s.agents,
+            [agentId]: {
+              ...rt,
+              status: "break",
+              pose: null,
+              breakUntil: Date.now() + 4200 + Math.random() * 2800,
+            },
+          },
+        });
+      },
+
+      endBreak: (agentId) => {
+        const s = get();
+        const rt = s.agents[agentId];
+        if (rt.status !== "break") return;
+        set({
+          agents: {
+            ...s.agents,
+            [agentId]: {
+              ...rt,
+              status: "returning",
+              breakUntil: undefined,
+              pose: returnPose(rt, agentId),
+            },
+          },
+        });
+      },
 
       addChatMessage: (msg) =>
         set((s) => ({
@@ -185,7 +358,7 @@ export const useCrewStore = create<CrewState>()(
 
       seedTasks: (tasks) =>
         set((s) => ({
-          tasks: [...s.tasks, ...tasks],
+          tasks: trimDone([...s.tasks, ...tasks]),
           activity: pushActivity(
             s.activity,
             "system",
@@ -303,6 +476,7 @@ export const useCrewStore = create<CrewState>()(
           ),
           completedTotal: s.completedTotal + 1,
           celebrations: [...s.celebrations, celebrationFor(task)].slice(-8),
+          ...completionUpdates(s, task),
           activity: pushActivity(
             s.activity,
             "done",
@@ -445,6 +619,7 @@ export const useCrewStore = create<CrewState>()(
               agents: released,
               completedTotal: s.completedTotal + 1,
               celebrations: [...s.celebrations, celebrationFor(task)].slice(-8),
+              ...completionUpdates(s, task),
               activity: pushActivity(
                 s.activity,
                 "done",
@@ -488,6 +663,10 @@ export const useCrewStore = create<CrewState>()(
         activity: s.activity,
         chatMessages: s.chatMessages,
         completedTotal: s.completedTotal,
+        agentStats: s.agentStats,
+        scenePhase: s.scenePhase,
+        sceneTheme: s.sceneTheme,
+        onboardingDone: s.onboardingDone,
       }),
       // Au rechargement : les tâches en cours retournent en backlog pour être redistribuées.
       merge: (persisted, current) => {
@@ -504,6 +683,10 @@ export const useCrewStore = create<CrewState>()(
           activity: p.activity ?? [],
           chatMessages: p.chatMessages ?? [],
           completedTotal: p.completedTotal ?? 0,
+          agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
+          scenePhase: p.scenePhase ?? "auto",
+          sceneTheme: p.sceneTheme ?? "mission-control",
+          onboardingDone: p.onboardingDone ?? false,
         };
       },
     },

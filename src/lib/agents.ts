@@ -98,6 +98,12 @@ export interface AgentRender {
   moving: boolean;
 }
 
+/** Petit attroupement autour de la machine à café (un spot par agent). */
+export function breakSpot(def: AgentDef): GridPos {
+  const idx = AGENTS.findIndex((a) => a.id === def.id);
+  return { gx: 7.5 - (idx % 3) * 0.55, gy: 7.8 + (idx % 2) * 0.55 };
+}
+
 /** Position logique courante d'un agent (utilisée par la boucle rAF, hors React). */
 export function agentRender(rt: AgentRuntime, def: AgentDef, now: number): AgentRender {
   if ((rt.status === "walking" || rt.status === "returning") && rt.pose) {
@@ -113,6 +119,9 @@ export function agentRender(rt: AgentRuntime, def: AgentDef, now: number): Agent
   }
   if (rt.status === "working") {
     return { pos: def.workSpot, facing: "right", moving: false };
+  }
+  if (rt.status === "break") {
+    return { pos: breakSpot(def), facing: "right", moving: false };
   }
   return { pos: def.idleSpot, facing: "right", moving: false };
 }

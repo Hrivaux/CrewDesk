@@ -2,7 +2,7 @@ import type { GridPos } from "@/lib/iso";
 
 export type AgentId = "atlas" | "pixel" | "forge" | "sonar" | "plume" | "vega";
 
-export type AgentStatus = "idle" | "walking" | "working" | "returning";
+export type AgentStatus = "idle" | "walking" | "working" | "returning" | "break";
 
 export type TaskStatus = "backlog" | "assigned" | "in_progress" | "review" | "done";
 
@@ -80,7 +80,34 @@ export interface AgentRuntime {
   status: AgentStatus;
   taskId: string | null;
   pose: Pose | null;
+  /** Fin de la pause café en cours. */
+  breakUntil?: number;
 }
+
+/** Une tâche terminée, dans l'historique d'un agent. */
+export interface CompletionRecord {
+  taskId: string;
+  title: string;
+  at: number;
+  tags: string[];
+}
+
+/** Progression d'un agent : il gagne de l'XP en terminant des tâches. */
+export interface AgentStats {
+  xp: number;
+  done: number;
+  history: CompletionRecord[];
+}
+
+/** Notification éphémère (toast verre dépoli). */
+export interface Toast {
+  id: string;
+  title: string;
+  message?: string;
+  color: string;
+}
+
+export type ScenePhase = "auto" | "day" | "night";
 
 /** Paquet lumineux envoyé par Atlas vers le poste d'un agent. */
 export interface DispatchFx {

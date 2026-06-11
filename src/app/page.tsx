@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
+import { useCrewStore } from "@/stores/useCrewStore";
 import { ChatDock } from "@/components/chat/ChatDock";
 import { Diorama } from "@/components/scene/Diorama";
+import { SceneControls } from "@/components/scene/SceneControls";
+import { AgentProfile } from "@/components/hud/AgentProfile";
+import { ReplayBar } from "@/components/hud/ReplayBar";
 import { SidePanel } from "@/components/hud/SidePanel";
 import { TopBar } from "@/components/hud/TopBar";
 import { BoardOverlay } from "@/components/kanban/BoardOverlay";
+import { Onboarding } from "@/components/Onboarding";
 import { Button } from "@/components/ui/Button";
 
 export default function Home() {
-  const [boardOpen, setBoardOpen] = useState(false);
+  const boardOpen = useCrewStore((s) => s.boardOverlayOpen);
+  const setBoardOpen = useCrewStore((s) => s.setBoardOverlayOpen);
 
   return (
     <div className="flex h-dvh flex-col">
@@ -25,6 +30,7 @@ export default function Home() {
           aria-label="Scène de l'équipe"
         >
           <Diorama />
+          <SceneControls />
           <div className="absolute top-3 right-3 z-10">
             <Button variant="primary" onClick={() => setBoardOpen(true)}>
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
@@ -35,6 +41,7 @@ export default function Home() {
               Kanban
             </Button>
           </div>
+          <ReplayBar />
         </motion.section>
 
         <div className="min-h-0 lg:basis-[35%] lg:max-w-105">
@@ -44,6 +51,8 @@ export default function Home() {
 
       <BoardOverlay open={boardOpen} onClose={() => setBoardOpen(false)} />
       <ChatDock />
+      <AgentProfile />
+      <Onboarding />
     </div>
   );
 }
