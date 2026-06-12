@@ -7,7 +7,7 @@ import { TopBar } from "@/components/hud/TopBar";
 
 export default function BoardPage() {
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopBar />
       <motion.main
         initial={{ opacity: 0, y: 10 }}

@@ -36,8 +36,8 @@ export function AgentSprite({ def, index, onRef }: AgentSpriteProps) {
 
   const vars = {
     "--ac": def.color,
-    "--aw": def.isOrchestrator ? "42px" : "32px",
-    "--ah": def.isOrchestrator ? "64px" : "50px",
+    "--aw": def.isOrchestrator ? "54px" : "42px",
+    "--ah": def.isOrchestrator ? "78px" : "64px",
     "--enter-delay": `${0.5 + index * 0.16}s`,
   } as CSSProperties;
 
@@ -71,18 +71,26 @@ export function AgentSprite({ def, index, onRef }: AgentSpriteProps) {
         style={{ background: "none", border: "none", padding: 0 }}
       >
         <div className="agent-bob">
-          <div className="agent-torso" />
-          <div className="agent-antenna" />
-          <div className="agent-visor">
-            <span
-              className="agent-eye"
-              style={{ "--blink-delay": `${blinkDelay}s` } as CSSProperties}
-            />
-            <span
-              className="agent-eye"
-              style={{ "--blink-delay": `${blinkDelay + 0.05}s` } as CSSProperties}
-            />
+          <div className="agent-leg agent-leg--l" />
+          <div className="agent-leg agent-leg--r" />
+          <div className="agent-torso">
+            <span className="agent-core" />
+            <span className="agent-panel agent-panel--l" />
+            <span className="agent-panel agent-panel--r" />
           </div>
+          <div className="agent-head">
+            <div className="agent-visor">
+              <span
+                className="agent-eye"
+                style={{ "--blink-delay": `${blinkDelay}s` } as CSSProperties}
+              />
+              <span
+                className="agent-eye"
+                style={{ "--blink-delay": `${blinkDelay + 0.05}s` } as CSSProperties}
+              />
+            </div>
+          </div>
+          <div className="agent-antenna" />
           <div className="agent-arm agent-arm--l" />
           <div className="agent-arm agent-arm--r" />
         </div>

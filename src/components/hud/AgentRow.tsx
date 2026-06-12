@@ -31,17 +31,17 @@ export function AgentRow({ def }: { def: AgentDef }) {
       onClick={() => selectAgent(selected ? null : def.id)}
       onPointerEnter={() => setHoveredAgent(def.id)}
       onPointerLeave={() => setHoveredAgent(null)}
-      className={`focus-ring group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors duration-150 ${
+      className={`focus-ring group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-[background-color,border-color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.99] ${
         selected
-          ? "border-[rgba(94,231,255,0.35)] bg-[rgba(94,231,255,0.06)]"
+          ? "border-[rgba(114,227,245,0.42)] bg-[rgba(114,227,245,0.075)] shadow-[inset_0_1px_0_rgba(234,240,248,0.09),0_0_24px_rgba(114,227,245,0.08)]"
           : hovered
-            ? "border-transparent bg-[rgba(234,240,248,0.05)]"
+            ? "translate-x-0.5 border-[rgba(234,240,248,0.08)] bg-[rgba(234,240,248,0.055)]"
             : "border-transparent hover:bg-[rgba(234,240,248,0.04)]"
       }`}
     >
       {/* Avatar miniature */}
       <span
-        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full font-display text-[11px] font-bold text-ink"
+        className="relative grid h-8 w-8 shrink-0 place-items-center rounded-xl font-display text-[11px] font-bold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
         style={{
           background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${def.color} 40%, white), ${def.color})`,
           boxShadow: `0 0 12px ${def.color}55`,

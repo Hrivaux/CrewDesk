@@ -12,6 +12,7 @@ import type {
   Celebration,
   ChatMessage,
   DispatchFx,
+  LiveProvider,
   Plan,
   Project,
   ScenePhase,
@@ -45,6 +46,8 @@ export interface CrewState {
   selectedTask: string | null;
   /** Vrai quand la clé API est configurée : les agents travaillent réellement. */
   liveMode: boolean;
+  liveProvider: LiveProvider | null;
+  liveModel: string | null;
   /** Dossier de base des projets sur le disque (mode live). */
   workspaceBase: string | null;
   /** Consommation API cumulée (tokens et $) et budget utilisateur. */
@@ -145,6 +148,7 @@ export interface CrewState {
   previewProject: string | null;
   setPreviewProject: (id: string | null) => void;
   setLiveMode: (live: boolean) => void;
+  setLiveProvider: (provider: LiveProvider | null, model?: string | null) => void;
   setWorkspaceBase: (base: string | null) => void;
   /** Atlas valide la revue : carte « Terminé » + confettis. */
   approveTask: (taskId: string) => void;
@@ -257,6 +261,8 @@ export const useCrewStore = create<CrewState>()(
       selectedTask: null,
       previewProject: null,
       liveMode: false,
+      liveProvider: null,
+      liveModel: null,
       workspaceBase: null,
       spend: { inputTokens: 0, outputTokens: 0, costUSD: 0 },
       budgetUSD: null,
@@ -879,6 +885,7 @@ export const useCrewStore = create<CrewState>()(
       setPreviewProject: (previewProject) => set({ previewProject }),
 
       setLiveMode: (liveMode) => set({ liveMode }),
+      setLiveProvider: (liveProvider, liveModel = null) => set({ liveProvider, liveModel }),
 
       setWorkspaceBase: (workspaceBase) => set({ workspaceBase }),
 

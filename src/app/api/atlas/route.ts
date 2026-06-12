@@ -8,11 +8,18 @@ import {
   teamSkillsSection,
   type SkillPayload,
 } from "@/services/prompts";
+import {
+  createOpenAIResponse,
+  extractOpenAIText,
+  openAIFunctionCalls,
+  openAIToolFromAnthropicTool,
+  resolveAIConfig,
+  usageFromOpenAI,
+} from "@/services/server/ai";
 import { addMessageUsage, emptyUsage, priceUsage } from "@/services/server/pricing";
 
 export const maxDuration = 300;
 
-const MODEL = process.env.CREWDESK_MODEL ?? "claude-opus-4-8";
 /** Fenêtre de conversation envoyée au modèle. */
 const HISTORY_LIMIT = 24;
 
@@ -35,9 +42,10 @@ interface PlanToolInput {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const ai = resolveAIConfig();
+  if (!ai.provider || !ai.model) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY manquante côté serveur." },
+      { error: "Clé API manquante côté serveur (ANTHROPIC_API_KEY ou OPENAI_API_KEY)." },
       { status: 503 },
     );
   }
@@ -69,7 +77,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const client = new Anthropic();
   const messages: Anthropic.MessageParam[] = turns
     .slice(-HISTORY_LIMIT)
     .map((m) => ({ role: m.role, content: m.content }));
@@ -77,8 +84,57 @@ export async function POST(request: Request) {
   while (messages.length > 0 && messages[0]?.role !== "user") messages.shift();
 
   try {
+    if (ai.provider === "openai") {
+      const response = await createOpenAIResponse({
+        model: ai.model,
+        instructions:
+          ATLAS_SYSTEM +
+          teamSkillsSection(teamSkills) +
+          skillsSection(atlasSkills),
+        input: messages,
+        tools: [openAIToolFromAnthropicTool(PLAN_TOOL)],
+        tool_choice: "auto",
+        reasoning: { effort: "medium" },
+        max_output_tokens: 8000,
+      });
+      const usage = usageFromOpenAI(response);
+      const toolUse = openAIFunctionCalls(response).find((call) => call.name === PLAN_TOOL.name);
+      const text = extractOpenAIText(response);
+
+      if (toolUse) {
+        const input = toolUse.arguments as unknown as PlanToolInput;
+        const tasks: PlannedTask[] = (input.tasks ?? []).map((t) => ({
+          title: t.title,
+          description: t.description,
+          agentId: t.agent,
+          estimateMin: Math.max(1, Math.round(t.estimate_min)),
+          tags: (t.tags ?? []).slice(0, 3),
+          dependsOn: t.depends_on,
+        }));
+        return NextResponse.json({
+          type: "plan",
+          text,
+          plan: {
+            id: `plan_${Date.now().toString(36)}`,
+            request: turns[turns.length - 1]?.content ?? "",
+            summary: input.summary,
+            projectName: input.project_name,
+            tasks,
+          },
+          usage,
+        });
+      }
+
+      return NextResponse.json({
+        type: "text",
+        text: text || "Peux-tu préciser ton besoin ?",
+        usage,
+      });
+    }
+
+    const client = new Anthropic();
     const response = await client.messages.create({
-      model: MODEL,
+      model: ai.model,
       max_tokens: 8000,
       thinking: { type: "adaptive" },
       system: [
@@ -97,7 +153,7 @@ export async function POST(request: Request) {
 
     const usage = emptyUsage();
     addMessageUsage(usage, response);
-    const pricedUsage = priceUsage(usage, MODEL);
+    const pricedUsage = priceUsage(usage, ai.model);
 
     if (response.stop_reason === "refusal") {
       return NextResponse.json({

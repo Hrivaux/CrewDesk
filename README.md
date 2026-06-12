@@ -15,8 +15,13 @@ npm run dev          # http://localhost:3000 — mode simulation
 ## Mode live (vrais agents, vrais livrables)
 
 1. Copier `.env.example` vers `.env.local`
-2. Renseigner `ANTHROPIC_API_KEY` (https://platform.claude.com/)
-3. Relancer `npm run dev` — le badge passe à **Live · Claude**
+2. Renseigner une clé provider :
+   - Claude : `ANTHROPIC_API_KEY` (https://platform.claude.com/)
+   - GPT : `OPENAI_API_KEY` (https://platform.openai.com/)
+3. Optionnel : choisir explicitement le provider avec
+   `CREWDESK_AI_PROVIDER=anthropic`, `CREWDESK_AI_PROVIDER=openai`, ou
+   `CREWDESK_AI_PROVIDER=auto` (défaut : Claude si disponible, sinon GPT).
+4. Relancer `npm run dev` — le badge passe à **Live · Claude** ou **Live · GPT**.
 
 En live :
 
@@ -35,8 +40,10 @@ En live :
 - `CREWDESK_ALLOW_COMMANDS=1` autorise en plus les agents à exécuter
   des commandes dans le dossier (npm install, build…). Désactivé par
   défaut : ils documentent alors les commandes dans le README du projet.
-- Les agents ont la **recherche web** (web_search/web_fetch) pour des
-  données à jour — coupable via `CREWDESK_WEB_TOOLS=0`.
+- Avec Claude, les agents ont la **recherche web** (web_search/web_fetch)
+  pour des données à jour — désactivable via `CREWDESK_WEB_TOOLS=0`.
+  Avec GPT, les agents utilisent les mêmes outils locaux de fichiers et
+  commandes ; la recherche web intégrée n'est pas activée dans cette version.
 - **Aperçu intégré** : bouton « ▶ Aperçu » sur la carte projet — le site
   produit s'affiche dans l'app (iframe), rechargeable, ouvrable dans un
   onglet.
@@ -49,7 +56,8 @@ Sans clé, l'app tourne en **simulation** complète (zéro coût) : mêmes
 
 ## Coûts et garde-fous
 
-- Modèle par défaut : `claude-opus-4-8` (`CREWDESK_MODEL` pour changer).
+- Modèles par défaut : `claude-opus-4-8` côté Claude, `gpt-5.5` côté OpenAI
+  (`CREWDESK_MODEL`, `ANTHROPIC_MODEL` ou `OPENAI_MODEL` pour changer).
 - Les tâches de démonstration ne déclenchent jamais d'appel API ; seules
   les tâches issues d'un plan validé (ou déplacées à la main) s'exécutent.
 - Une tâche qui échoue deux fois n'est plus relancée automatiquement.

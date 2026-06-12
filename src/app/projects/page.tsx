@@ -11,7 +11,7 @@ export default function ProjectsPage() {
   const tasks = useCrewStore((s) => s.tasks);
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopBar />
       <main className="thin-scroll min-h-0 flex-1 overflow-y-auto p-4">
         <div className="mx-auto grid w-full max-w-4xl gap-4 md:grid-cols-2">

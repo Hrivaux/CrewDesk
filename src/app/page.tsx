@@ -18,15 +18,15 @@ export default function Home() {
   const setBoardOpen = useCrewStore((s) => s.setBoardOverlayOpen);
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col">
       <TopBar />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-3 p-3 lg:flex-row">
+      <main className="flex flex-1 flex-col gap-3 p-3 lg:min-h-0 lg:flex-row">
         <motion.section
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 26, delay: 0.05 }}
-          className="glass relative min-h-[46dvh] flex-1 overflow-hidden rounded-2xl lg:min-h-0 lg:basis-[65%]"
+          className="glass relative min-h-[72svh] flex-1 overflow-hidden rounded-2xl lg:min-h-0 lg:basis-[65%]"
           aria-label="Scène de l'équipe"
         >
           <Diorama />

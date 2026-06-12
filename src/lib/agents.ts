@@ -23,8 +23,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Orchestrateur",
     color: "#5EE7FF",
     personality: "Calme absolu. Voit tout, n'oublie rien, distribue juste.",
-    idleSpot: { gx: 4.2, gy: 3.4 },
-    workSpot: { gx: 5, gy: 2.2 },
+    idleSpot: { gx: 4.9, gy: 3.7 },
+    workSpot: { gx: 4.9, gy: 3.7 },
     isOrchestrator: true,
   },
   {
@@ -33,8 +33,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Design & Frontend",
     color: "#FF8A4C",
     personality: "Perfectionniste. Déteste les bugs en prod.",
-    idleSpot: { gx: 3.4, gy: 8.2 },
-    workSpot: { gx: 2.2, gy: 3.2 },
+    idleSpot: { gx: 2.7, gy: 4.6 },
+    workSpot: { gx: 2.7, gy: 4.6 },
   },
   {
     id: "forge",
@@ -42,8 +42,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Développement",
     color: "#4D8DFF",
     personality: "Méthodique. Ne livre jamais sans tests.",
-    idleSpot: { gx: 4.6, gy: 8.5 },
-    workSpot: { gx: 7.8, gy: 3.2 },
+    idleSpot: { gx: 7.2, gy: 4.6 },
+    workSpot: { gx: 7.2, gy: 4.6 },
   },
   {
     id: "sonar",
@@ -51,8 +51,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Recherche & Analyse",
     color: "#3CDFA0",
     personality: "Curiosité insatiable. Cite toujours ses sources.",
-    idleSpot: { gx: 5.8, gy: 8.2 },
-    workSpot: { gx: 7.9, gy: 5.1 },
+    idleSpot: { gx: 8.2, gy: 6.1 },
+    workSpot: { gx: 8.2, gy: 6.1 },
   },
   {
     id: "plume",
@@ -60,8 +60,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Contenu & Rédaction",
     color: "#A777FF",
     personality: "Élégante. Traque la moindre coquille.",
-    idleSpot: { gx: 6.9, gy: 8.5 },
-    workSpot: { gx: 2.1, gy: 5.1 },
+    idleSpot: { gx: 3.0, gy: 6.3 },
+    workSpot: { gx: 3.0, gy: 6.3 },
   },
   {
     id: "vega",
@@ -69,8 +69,8 @@ export const AGENTS: readonly AgentDef[] = [
     role: "Marketing & Planning",
     color: "#FFC94D",
     personality: "Énergique. Pense en roadmaps et en jalons.",
-    idleSpot: { gx: 7.9, gy: 7.6 },
-    workSpot: { gx: 6.3, gy: 2.1 },
+    idleSpot: { gx: 6.2, gy: 7.4 },
+    workSpot: { gx: 6.2, gy: 7.4 },
   },
 ] as const;
 

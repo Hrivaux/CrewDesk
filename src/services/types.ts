@@ -2,6 +2,8 @@ import type { GridPos } from "@/lib/iso";
 
 export type AgentId = "atlas" | "pixel" | "forge" | "sonar" | "plume" | "vega";
 
+export type LiveProvider = "anthropic" | "openai";
+
 export type AgentStatus = "idle" | "walking" | "working" | "returning" | "break";
 
 export type TaskStatus = "backlog" | "assigned" | "in_progress" | "review" | "done";

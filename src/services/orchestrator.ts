@@ -713,11 +713,18 @@ export function useSimulation(): void {
       let workspace: string | null = null;
       try {
         const res = await fetch("/api/health");
-        const data = (await res.json()) as { live?: boolean; workspace?: string };
+        const data = (await res.json()) as {
+          live?: boolean;
+          provider?: "anthropic" | "openai" | null;
+          model?: string | null;
+          workspace?: string;
+        };
         live = Boolean(data.live);
         workspace = data.workspace ?? null;
+        useCrewStore.getState().setLiveProvider(data.provider ?? null, data.model ?? null);
       } catch {
         live = false;
+        useCrewStore.getState().setLiveProvider(null, null);
       }
       if (cancelled) return;
       useCrewStore.getState().setLiveMode(live);

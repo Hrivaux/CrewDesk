@@ -1,6 +1,16 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { agentSystem, skillsSection, type SkillPayload } from "@/services/prompts";
+import type { TaskUsage } from "@/services/types";
+import {
+  createOpenAIResponse,
+  extractOpenAIText,
+  openAIFunctionCalls,
+  openAIToolFromAnthropicTool,
+  type OpenAIResponseItem,
+  resolveAIConfig,
+  usageFromOpenAI,
+} from "@/services/server/ai";
 import { addMessageUsage, emptyUsage, priceUsage } from "@/services/server/pricing";
 import {
   EXECUTOR_TOOLS,
@@ -12,7 +22,6 @@ import {
 
 export const maxDuration = 300;
 
-const MODEL = process.env.CREWDESK_MODEL ?? "claude-opus-4-8";
 /** Chaque rapport prérequis est tronqué avant injection en contexte. */
 const CONTEXT_CHARS = 8_000;
 /** Garde-fou de la boucle agentique. */
@@ -30,9 +39,10 @@ interface ExecutePayload {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const ai = resolveAIConfig();
+  if (!ai.provider || !ai.model) {
     return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY manquante côté serveur." },
+      { error: "Clé API manquante côté serveur (ANTHROPIC_API_KEY ou OPENAI_API_KEY)." },
       { status: 503 },
     );
   }
@@ -81,18 +91,73 @@ export async function POST(request: Request) {
     );
   }
 
-  const client = new Anthropic();
   const messages: Anthropic.MessageParam[] = [
     { role: "user", content: sections.join("\n\n---\n\n") },
   ];
   const filesWritten = new Set<string>();
-  const tools = webToolsEnabled() ? [...EXECUTOR_TOOLS, ...WEB_TOOLS] : EXECUTOR_TOOLS;
   const usage = emptyUsage();
 
   try {
+    if (ai.provider === "openai") {
+      const openAIInput: Array<Record<string, unknown> | OpenAIResponseItem> = [
+        { role: "user", content: sections.join("\n\n---\n\n") },
+      ];
+      const openAITools = EXECUTOR_TOOLS.map(openAIToolFromAnthropicTool);
+      const openAIUsage: TaskUsage = { inputTokens: 0, outputTokens: 0, costUSD: 0 };
+
+      for (let i = 0; i < MAX_ITERATIONS; i++) {
+        const response = await createOpenAIResponse({
+          model: ai.model,
+          instructions: agentSystem(payload.agent) + skillsSection(payload.skills ?? []),
+          input: openAIInput,
+          tools: openAITools,
+          tool_choice: "auto",
+          reasoning: { effort: "medium" },
+          max_output_tokens: 16_000,
+        });
+        const turnUsage = usageFromOpenAI(response);
+        openAIUsage.inputTokens += turnUsage.inputTokens;
+        openAIUsage.outputTokens += turnUsage.outputTokens;
+        openAIUsage.costUSD += turnUsage.costUSD;
+
+        const toolUses = openAIFunctionCalls(response);
+        if (toolUses.length === 0) {
+          return NextResponse.json({
+            report: extractOpenAIText(response) || "Tâche terminée.",
+            files: [...filesWritten].sort(),
+            usage: {
+              ...openAIUsage,
+              costUSD: Math.round(openAIUsage.costUSD * 10_000) / 10_000,
+            },
+          });
+        }
+
+        openAIInput.push(...(response.output ?? []));
+        for (const toolUse of toolUses) {
+          const outcome = await runTool(root, toolUse.name, toolUse.arguments);
+          if (outcome.wroteFile) filesWritten.add(outcome.wroteFile);
+          openAIInput.push({
+            type: "function_call_output",
+            call_id: toolUse.callId,
+            output: outcome.result,
+          });
+        }
+      }
+
+      return NextResponse.json(
+        {
+          error: `Tâche interrompue après ${MAX_ITERATIONS} itérations.`,
+          files: [...filesWritten].sort(),
+        },
+        { status: 504 },
+      );
+    }
+
+    const client = new Anthropic();
+    const tools = webToolsEnabled() ? [...EXECUTOR_TOOLS, ...WEB_TOOLS] : EXECUTOR_TOOLS;
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const stream = client.messages.stream({
-        model: MODEL,
+        model: ai.model,
         max_tokens: 16_000,
         thinking: { type: "adaptive" },
         system: [
@@ -134,7 +199,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           report: report || "Tâche terminée.",
           files: [...filesWritten].sort(),
-          usage: priceUsage(usage, MODEL),
+          usage: priceUsage(usage, ai.model),
         });
       }
 

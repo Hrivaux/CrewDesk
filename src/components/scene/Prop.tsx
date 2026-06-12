@@ -4,9 +4,16 @@ import { depth, project } from "@/lib/iso";
 
 export type PropKind =
   | "desk"
+  | "officeDesk"
+  | "chair"
   | "server"
+  | "vault"
   | "holo"
   | "kiosk"
+  | "whiteboard"
+  | "glass"
+  | "gate"
+  | "cabinet"
   | "cafe"
   | "fridge"
   | "stool"
@@ -32,27 +39,33 @@ export interface PropSpec {
  */
 export const PROPS: readonly PropSpec[] = [
   // Couche sol : tapis et marquages peints.
-  { id: "rug-war", kind: "rug", pos: { gx: 5, gy: 2.3 }, color: "#5EE7FF", size: 120 },
-  { id: "rug-lounge", kind: "rug", pos: { gx: 2.7, gy: 8.3 }, color: "#A777FF", size: 104 },
-  { id: "decal-studio", kind: "decal", pos: { gx: 2.0, gy: 4.4 }, label: "studio" },
-  { id: "decal-ops", kind: "decal", pos: { gx: 7.2, gy: 5.7 }, label: "ops" },
-  { id: "decal-cafe", kind: "decal", pos: { gx: 7.1, gy: 7.1 }, label: "cafétéria" },
-  // War room.
-  { id: "holo", kind: "holo", pos: { gx: 5, gy: 0.9 } },
+  { id: "rug-war", kind: "rug", pos: { gx: 5.6, gy: 2.6 }, color: "#5EE7FF", size: 130 },
+  { id: "rug-lounge", kind: "rug", pos: { gx: 2.1, gy: 7.9 }, color: "#A777FF", size: 116 },
+  { id: "decal-desk", kind: "decal", pos: { gx: 2.6, gy: 4.0 }, label: "Desk 01" },
+  { id: "decal-vault", kind: "decal", pos: { gx: 0.8, gy: 2.2 }, label: "Vault" },
+  { id: "decal-gate", kind: "decal", pos: { gx: 6.7, gy: 7.8 }, label: "Secure Gate" },
+  // Cloisons et zones bureau.
+  { id: "glass-left", kind: "glass", pos: { gx: 1.2, gy: 2.4 }, size: 116 },
+  { id: "glass-right", kind: "glass", pos: { gx: 7.0, gy: 2.0 }, size: 126 },
+  { id: "gate", kind: "gate", pos: { gx: 6.2, gy: 7.0 } },
   // Open-space.
-  { id: "desk-a", kind: "desk", pos: { gx: 2.2, gy: 2.0 } },
-  { id: "desk-b", kind: "desk", pos: { gx: 7.8, gy: 2.0 } },
-  { id: "shelf", kind: "shelf", pos: { gx: 0.9, gy: 3.4 } },
+  { id: "office-desk", kind: "officeDesk", pos: { gx: 2.7, gy: 5.4 } },
+  { id: "chair", kind: "chair", pos: { gx: 1.5, gy: 5.9 } },
+  { id: "desk-b", kind: "desk", pos: { gx: 7.8, gy: 3.1 } },
+  { id: "whiteboard", kind: "whiteboard", pos: { gx: 4.9, gy: 1.1 } },
+  { id: "holo", kind: "holo", pos: { gx: 6.2, gy: 2.2 } },
   // Ops.
-  { id: "server", kind: "server", pos: { gx: 8.7, gy: 5.1 } },
-  { id: "kiosk", kind: "kiosk", pos: { gx: 1.1, gy: 5.1 } },
-  // Cafétéria.
-  { id: "cafe", kind: "cafe", pos: { gx: 8.5, gy: 8.3 } },
-  { id: "fridge", kind: "fridge", pos: { gx: 9.4, gy: 7.3 } },
-  { id: "stool-1", kind: "stool", pos: { gx: 7.6, gy: 9.0 } },
-  { id: "stool-2", kind: "stool", pos: { gx: 8.4, gy: 9.4 } },
-  // Lounge.
-  { id: "sofa", kind: "sofa", pos: { gx: 2.2, gy: 8.9 } },
+  { id: "vault", kind: "vault", pos: { gx: 0.7, gy: 1.5 } },
+  { id: "server", kind: "server", pos: { gx: 8.5, gy: 5.8 } },
+  { id: "kiosk", kind: "kiosk", pos: { gx: 5.4, gy: 6.2 } },
+  { id: "cabinet", kind: "cabinet", pos: { gx: 8.9, gy: 1.2 } },
+  { id: "shelf", kind: "shelf", pos: { gx: 0.8, gy: 4.0 } },
+  // Cafétéria / lounge.
+  { id: "cafe", kind: "cafe", pos: { gx: 7.8, gy: 8.5 } },
+  { id: "fridge", kind: "fridge", pos: { gx: 9.1, gy: 7.7 } },
+  { id: "stool-1", kind: "stool", pos: { gx: 6.9, gy: 9.0 } },
+  { id: "stool-2", kind: "stool", pos: { gx: 7.8, gy: 9.4 } },
+  { id: "sofa", kind: "sofa", pos: { gx: 2.0, gy: 8.7 } },
   // Verdure.
   { id: "plant-1", kind: "plant", pos: { gx: 0.9, gy: 0.9 } },
   { id: "plant-2", kind: "plant", pos: { gx: 9.1, gy: 1.0 } },
@@ -72,6 +85,30 @@ const LEAVES = [
 
 function PropBody({ spec }: { spec: PropSpec }) {
   switch (spec.kind) {
+    case "officeDesk":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 126, height: 44, top: -15 }} />
+          <div className="office-desk">
+            <div className="office-monitor office-monitor--wide">
+              <div className="code-screen" />
+            </div>
+            <div className="office-monitor office-monitor--side">
+              <div className="code-screen code-screen--calm" />
+            </div>
+            <div className="office-lamp" />
+            <div className="office-keyboard" />
+            <div className="office-mouse" />
+          </div>
+        </>
+      );
+    case "chair":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 42, height: 18, top: -3 }} />
+          <div className="office-chair" />
+        </>
+      );
     case "desk":
       return (
         <>
@@ -86,6 +123,17 @@ function PropBody({ spec }: { spec: PropSpec }) {
           </div>
           <div className="monitor">
             <div className="code-screen" />
+          </div>
+        </>
+      );
+    case "vault":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 58, height: 24, top: -5 }} />
+          <div className="vault">
+            <span className="vault-shelf" />
+            <span className="vault-shelf" />
+            <span className="vault-door" />
           </div>
         </>
       );
@@ -109,6 +157,43 @@ function PropBody({ spec }: { spec: PropSpec }) {
               />
             ))}
           </div>
+        </>
+      );
+    case "whiteboard":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 88, height: 18, top: -2 }} />
+          <div className="whiteboard">
+            <span className="wb-title">Workflow</span>
+            <span className="wb-line wb-line--a" />
+            <span className="wb-line wb-line--b" />
+            <span className="wb-card wb-card--one" />
+            <span className="wb-card wb-card--two" />
+          </div>
+        </>
+      );
+    case "glass":
+      return (
+        <div
+          className="glass-partition"
+          style={{ "--glass-w": `${spec.size ?? 110}px` } as CSSProperties}
+        />
+      );
+    case "gate":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 92, height: 18, top: -2 }} />
+          <div className="security-gate">
+            <span />
+            <span />
+          </div>
+        </>
+      );
+    case "cabinet":
+      return (
+        <>
+          <div className="prop-shadow" style={{ width: 38, height: 14, top: -3 }} />
+          <div className="cabinet" />
         </>
       );
     case "holo":
