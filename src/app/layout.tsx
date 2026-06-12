@@ -5,6 +5,7 @@ import { SimulationRunner } from "@/components/SimulationRunner";
 import { AgentTraining } from "@/components/hud/AgentTraining";
 import { ToastHost } from "@/components/hud/ToastHost";
 import { TaskDetail } from "@/components/kanban/TaskDetail";
+import { ProjectPreview } from "@/components/projects/ProjectPreview";
 import "./globals.css";
 
 const sora = Sora({
@@ -44,6 +45,7 @@ export default function RootLayout({
         {children}
         <TaskDetail />
         <AgentTraining />
+        <ProjectPreview />
         <ToastHost />
         <CommandPalette />
       </body>

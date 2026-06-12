@@ -35,6 +35,13 @@ En live :
 - `CREWDESK_ALLOW_COMMANDS=1` autorise en plus les agents à exécuter
   des commandes dans le dossier (npm install, build…). Désactivé par
   défaut : ils documentent alors les commandes dans le README du projet.
+- Les agents ont la **recherche web** (web_search/web_fetch) pour des
+  données à jour — coupable via `CREWDESK_WEB_TOOLS=0`.
+- **Aperçu intégré** : bouton « ▶ Aperçu » sur la carte projet — le site
+  produit s'affiche dans l'app (iframe), rechargeable, ouvrable dans un
+  onglet.
+- **Retouches** : sur une carte en Revue/Terminé, écris ton retour —
+  l'agent reprend ses fichiers et corrige sans repartir de zéro.
 - Tout est suivi en temps réel : diorama, kanban, flux d'activité, toasts.
 
 Sans clé, l'app tourne en **simulation** complète (zéro coût) : mêmes

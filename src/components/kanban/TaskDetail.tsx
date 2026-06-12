@@ -30,7 +30,9 @@ export function TaskDetail() {
   const deps = task?.dependsOnIds
     ? tasks.filter((t) => task.dependsOnIds?.includes(t.id))
     : [];
+  const requestRevision = useCrewStore((s) => s.requestRevision);
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     if (!selectedTask) return;
@@ -41,7 +43,10 @@ export function TaskDetail() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedTask, setSelectedTask]);
 
-  useEffect(() => setCopied(false), [selectedTask]);
+  useEffect(() => {
+    setCopied(false);
+    setFeedback("");
+  }, [selectedTask]);
 
   const def = task ? AGENT_BY_ID[task.agentId] : null;
 
@@ -161,7 +166,7 @@ export function TaskDetail() {
                   </Button>
                 ) : null}
               </div>
-              <div className="mt-2 pb-4">
+              <div className="mt-2 pb-2">
                 {task.deliverable ? (
                   <Markdown text={task.deliverable} />
                 ) : (
@@ -172,6 +177,46 @@ export function TaskDetail() {
                   </p>
                 )}
               </div>
+
+              {task.deliverable &&
+              (task.status === "review" || task.status === "done") ? (
+                <div className="mb-4 rounded-xl border border-[rgba(255,179,92,0.25)] bg-[rgba(255,179,92,0.05)] p-3">
+                  <p className="label-mono" style={{ color: "#FFB35C" }}>
+                    Demander une retouche
+                  </p>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    rows={3}
+                    maxLength={4000}
+                    placeholder={`Dis à ${def.name} ce qui doit changer — il reprendra son travail avec ton retour.`}
+                    aria-label="Retour pour la retouche"
+                    className="focus-ring mt-2 w-full resize-y rounded-lg border border-[rgba(234,240,248,0.1)] bg-[rgba(7,9,14,0.5)] px-2.5 py-2 text-xs leading-relaxed text-foreground placeholder:text-muted/60"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      variant="primary"
+                      disabled={feedback.trim() === ""}
+                      onClick={() => {
+                        requestRevision(task.id, feedback);
+                        setFeedback("");
+                      }}
+                    >
+                      Envoyer à {def.name}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              {task.revisionNote && task.status !== "review" && task.status !== "done" ? (
+                <div className="mb-4 rounded-lg border border-[rgba(255,179,92,0.25)] bg-[rgba(255,179,92,0.05)] px-3 py-2">
+                  <p className="label-mono" style={{ color: "#FFB35C" }}>
+                    Retouche en cours
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-foreground/85">
+                    {task.revisionNote}
+                  </p>
+                </div>
+              ) : null}
             </div>
           </motion.aside>
         </div>

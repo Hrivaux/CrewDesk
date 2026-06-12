@@ -120,7 +120,12 @@ export interface CrewState {
   sendToReview: (taskId: string, deliverable?: string, files?: string[]) => void;
   /** Échec d'exécution (live) : la carte retourne au backlog, l'agent rentre. */
   failTask: (taskId: string, message: string) => void;
+  /** Retouche : l'agent reprend son travail avec le retour de l'utilisateur. */
+  requestRevision: (taskId: string, feedback: string) => void;
   setSelectedTask: (id: string | null) => void;
+  /** Projet ouvert dans l'aperçu (iframe). */
+  previewProject: string | null;
+  setPreviewProject: (id: string | null) => void;
   setLiveMode: (live: boolean) => void;
   setWorkspaceBase: (base: string | null) => void;
   /** Atlas valide la revue : carte « Terminé » + confettis. */
@@ -232,6 +237,7 @@ export const useCrewStore = create<CrewState>()(
       selectedAgent: null,
       hoveredAgent: null,
       selectedTask: null,
+      previewProject: null,
       liveMode: false,
       workspaceBase: null,
       completedTotal: 0,
@@ -517,6 +523,7 @@ export const useCrewStore = create<CrewState>()(
                   reviewAt: Date.now(),
                   deliverable: deliverable ?? t.deliverable,
                   files: files ?? t.files,
+                  revisionNote: undefined,
                   error: undefined,
                 }
               : t,
@@ -755,7 +762,38 @@ export const useCrewStore = create<CrewState>()(
         });
       },
 
+      requestRevision: (taskId, feedback) => {
+        const s = get();
+        const task = s.tasks.find((t) => t.id === taskId);
+        if (!task || !task.deliverable || feedback.trim() === "") return;
+        const def = AGENT_BY_ID[task.agentId];
+        set({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  status: "assigned",
+                  progress: 0,
+                  revisionNote: feedback.trim(),
+                  startedAt: undefined,
+                  reviewAt: undefined,
+                  completedAt: undefined,
+                  error: undefined,
+                }
+              : t,
+          ),
+          activity: pushActivity(
+            s.activity,
+            "dispatch",
+            `Retouche demandée à ${def.name} sur « ${task.title} »`,
+            task.agentId,
+          ),
+        });
+      },
+
       setSelectedTask: (id) => set({ selectedTask: id }),
+
+      setPreviewProject: (previewProject) => set({ previewProject }),
 
       setLiveMode: (liveMode) => set({ liveMode }),
 

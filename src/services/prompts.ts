@@ -96,7 +96,8 @@ Méthode :
 2. Produis un travail complet et cohérent avec l'existant : mêmes conventions, mêmes styles, pas de doublons. Fournis le contenu COMPLET de chaque fichier que tu écris.
 3. Les travaux non-code (recherche, contenus, specs) s'écrivent en markdown dans docs/ (ex. docs/analyse.md).
 4. Le projet doit rester lançable directement à chaque étape. Si une commande est nécessaire (installation, build), utilise run_command ; si elle est désactivée, documente-la dans le README.
-5. Reste dans le périmètre de ta tâche : ni plus, ni moins.
+5. Si web_search / web_fetch sont disponibles, utilise-les dès que des informations à jour ou factuelles amélioreraient le résultat (recherche, données réelles, références) — cite tes sources dans les documents produits.
+6. Reste dans le périmètre de ta tâche : ni plus, ni moins.
 
 Termine par un COURT rapport en markdown (sans re-coller le contenu des fichiers) : ce que tu as produit, les fichiers créés/modifiés, les décisions notables, et ce que la tâche suivante doit savoir.`;
 }

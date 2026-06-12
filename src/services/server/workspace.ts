@@ -20,6 +20,16 @@ export function commandsAllowed(): boolean {
   return process.env.CREWDESK_ALLOW_COMMANDS === "1";
 }
 
+/** Outils web serveur (recherche/lecture) — activés par défaut, CREWDESK_WEB_TOOLS=0 pour couper. */
+export function webToolsEnabled(): boolean {
+  return process.env.CREWDESK_WEB_TOOLS !== "0";
+}
+
+export const WEB_TOOLS = [
+  { type: "web_search_20260209" as const, name: "web_search" as const },
+  { type: "web_fetch_20260209" as const, name: "web_fetch" as const },
+];
+
 /** Résout le dossier d'un projet (slug contrôlé) et le crée au besoin. */
 export async function projectDir(slug: string): Promise<string> {
   if (!/^[a-z0-9][a-z0-9-]{0,47}$/.test(slug)) {

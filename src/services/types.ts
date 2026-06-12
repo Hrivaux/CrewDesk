@@ -24,6 +24,8 @@ export interface Task {
   deliverable?: string;
   /** Fichiers créés/modifiés dans le dossier projet (chemins relatifs). */
   files?: string[];
+  /** Retour utilisateur en attente : l'agent doit retoucher son travail. */
+  revisionNote?: string;
   /** Origine : créée par la simulation ou via un plan validé. */
   source?: "sim" | "live";
   /** Tentatives d'exécution (live) — au-delà de 2, dispatch manuel requis. */

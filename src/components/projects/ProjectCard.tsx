@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import type { Project, Task } from "@/services/types";
 import { AGENT_BY_ID } from "@/lib/agents";
 import type { AgentId } from "@/services/types";
+import { useCrewStore } from "@/stores/useCrewStore";
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressRing } from "@/components/ui/ProgressRing";
@@ -23,6 +25,7 @@ function daysLeft(at: number): number {
 }
 
 export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
+  const setPreviewProject = useCrewStore((s) => s.setPreviewProject);
   const done = tasks.filter((t) => t.status === "done").length;
   const inProgress = tasks.filter(
     (t) => t.status === "in_progress" || t.status === "review",
@@ -48,9 +51,12 @@ export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-muted">{project.objective}</p>
             {project.dir ? (
-              <p className="mt-1.5 truncate font-mono text-[9px] tracking-[0.08em] text-cyan/70">
-                📁 {project.dir}/
-              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <p className="truncate font-mono text-[9px] tracking-[0.08em] text-cyan/70">
+                  📁 {project.dir}/
+                </p>
+                <Button onClick={() => setPreviewProject(project.id)}>▶ Aperçu</Button>
+              </div>
             ) : null}
           </div>
           <ProgressRing value={progress} color={project.color} />

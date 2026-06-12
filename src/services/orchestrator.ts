@@ -472,6 +472,9 @@ async function executeTask(taskId: string): Promise<void> {
         project: { name: project.name, objective: project.objective, dir: project.dir },
         context,
         skills: activeSkills(task.agentId),
+        revision: task.revisionNote
+          ? { note: task.revisionNote, previousReport: task.deliverable ?? "" }
+          : undefined,
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
@@ -550,7 +553,7 @@ export function startSimulation(live: boolean): () => void {
       if (carrier.taskId !== task.id || carrier.status !== "working") continue;
 
       if (live) {
-        if (task.deliverable) {
+        if (task.deliverable && !task.revisionNote) {
           // Livrable déjà présent (rechargement) : direct en revue.
           fresh.sendToReview(task.id);
         } else if (inflight.has(task.id)) {

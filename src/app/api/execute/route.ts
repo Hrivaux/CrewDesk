@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import { agentSystem, skillsSection, type SkillPayload } from "@/services/prompts";
 import {
   EXECUTOR_TOOLS,
+  WEB_TOOLS,
   projectDir,
   runTool,
+  webToolsEnabled,
 } from "@/services/server/workspace";
 
 export const maxDuration = 300;
@@ -22,6 +24,8 @@ interface ExecutePayload {
   context?: Array<{ title: string; agent: string; deliverable: string }>;
   /** Entraînement de l'agent (skills & connaissances actifs). */
   skills?: SkillPayload[];
+  /** Retouche : retour utilisateur + rapport précédent de l'agent. */
+  revision?: { note: string; previousReport: string };
 }
 
 export async function POST(request: Request) {
@@ -70,12 +74,18 @@ export async function POST(request: Request) {
     `# Ta tâche : ${payload.task.title}\n\n${payload.task.description}` +
       (payload.task.tags?.length ? `\n\nTags : ${payload.task.tags.join(", ")}` : ""),
   );
+  if (payload.revision) {
+    sections.push(
+      `# RETOUCHE DEMANDÉE\n\nTu as déjà réalisé cette tâche. Ton rapport précédent :\n\n${payload.revision.previousReport.slice(0, CONTEXT_CHARS)}\n\nRetour de l'utilisateur :\n\n${payload.revision.note.slice(0, 4000)}\n\nRelis les fichiers existants puis modifie-les pour répondre à ce retour — ne repars pas de zéro, conserve ce qui n'est pas concerné.`,
+    );
+  }
 
   const client = new Anthropic();
   const messages: Anthropic.MessageParam[] = [
     { role: "user", content: sections.join("\n\n---\n\n") },
   ];
   const filesWritten = new Set<string>();
+  const tools = webToolsEnabled() ? [...EXECUTOR_TOOLS, ...WEB_TOOLS] : EXECUTOR_TOOLS;
 
   try {
     for (let i = 0; i < MAX_ITERATIONS; i++) {
@@ -90,7 +100,7 @@ export async function POST(request: Request) {
             cache_control: { type: "ephemeral" },
           },
         ],
-        tools: EXECUTOR_TOOLS,
+        tools,
         messages,
       });
       const response = await stream.finalMessage();
