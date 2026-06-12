@@ -140,6 +140,28 @@ Pour chaque concurrent : positionnement en une phrase, cible, pricing, 2 forces,
 - Action : un seul CTA, verbe d'action, urgence honnête (pas de fausse rareté).
 - Titres : 6-10 mots, bénéfice ou curiosité, jamais de jeu de mots obscur.`,
     },
+    {
+      name: "Posts LinkedIn qui vendent un SaaS",
+      description: "Pour le contenu réseaux orienté acquisition",
+      content: `## Posts LinkedIn pour vendre un SaaS
+- 1re ligne = tout : une accroche qui arrête le scroll (problème vécu, résultat chiffré, opinion tranchée). Pas de « Je suis ravi de… ».
+- Format : phrases courtes, beaucoup de retours à la ligne, 800-1300 caractères, lisible au pouce.
+- 1 idée par post rattachée à un pilier (éduquer / prouver / coulisses / social proof / offre).
+- Vends le résultat, pas la fonctionnalité : « passe de X à Y », pas « notre outil fait Z ».
+- CTA doux et varié : question en fin de post, « DM si… », lien en commentaire (jamais en plein post).
+- Preuves concrètes : chiffres, captures décrites, témoignages, avant/après.
+- Bannir le jargon corporate et les hashtags en pagaille (3 max, pertinents).`,
+    },
+    {
+      name: "Hooks X/Twitter",
+      description: "Accroches et threads pour l'acquisition",
+      content: `## Tweets & threads
+- Le 1er tweet doit pouvoir vivre seul : promesse claire ou tension. Si on n'a pas envie de lire la suite, réécris.
+- Une idée par tweet, ligne courte, pas de remplissage.
+- Threads : 5-7 tweets, 1 idée chacun, le dernier récapitule + CTA.
+- Modèles d'accroche : « J'ai [résultat] en [temps]. Voici comment : », « La plupart des [cible] font [erreur]. Fais ça à la place : », « [Chiffre] leçons après [expérience] ».
+- Montre, ne te vante pas : exemples, captures décrites, mini études de cas.`,
+    },
   ],
   vega: [
     {
@@ -161,6 +183,16 @@ Pour chaque concurrent : positionnement en une phrase, cible, pricing, 2 forces,
 - Alterner les intentions : éduquer / prouver / convertir (ratio 3-2-1).
 - Recycler : 1 contenu pilier → 3 déclinaisons courtes.
 - Inclure une colonne « indicateur à suivre » par contenu.`,
+    },
+    {
+      name: "Piliers de contenu SaaS",
+      description: "Stratégie de contenu pour vendre un SaaS",
+      content: `## Piliers de contenu pour vendre un SaaS
+- 5 piliers à alterner : Éduquer (résoudre un problème de la cible), Prouver (résultats, chiffres, études de cas), Coulisses (build in public, roadmap), Social proof (témoignages, avis), Offre (essai, démo, promo) — ratio conseillé 2-1-1-0,5-0,5 par semaine.
+- Chaque post part d'une douleur précise de l'acheteur, pas d'une fonctionnalité.
+- Toujours un seul objectif par post (notoriété OU clic OU inscription) et une métrique associée.
+- Construire une routine d'engagement (commenter d'autres comptes de la niche) en plus de la publication.
+- Réutiliser : un contenu pilier (article, étude) se décline en 5-8 posts courts.`,
     },
   ],
 };

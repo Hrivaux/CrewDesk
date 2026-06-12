@@ -28,6 +28,23 @@ interface DomainTemplate {
 
 const DOMAINS: DomainTemplate[] = [
   {
+    keywords: [
+      "réseaux", "reseaux", "réseau sociaux", "social media", "sociaux", "linkedin",
+      "twitter", "instagram", "tiktok", "post ", "posts", "publication", "growth",
+      "acquisition", "communauté", "communaute",
+    ],
+    summary:
+      "Campagne de contenu réseaux sociaux pour vendre ton SaaS : positionnement, piliers, posts par plateforme, visuels et calendrier de publication.",
+    tasks: [
+      { title: "Positionnement & audience", description: "Identifier la cible (qui achète et pourquoi), la proposition de valeur en une phrase, les 3 douleurs principales et les objections fréquentes. Analyser 3-4 SaaS concurrents : comment ils communiquent sur les réseaux, leurs angles qui marchent. Utiliser la recherche web pour des exemples réels. Livrer dans docs/positionnement.md.", agentId: "sonar", estimateMin: 22, tags: ["recherche", "growth"] },
+      { title: "Piliers de contenu & angles", description: "Définir 4 à 5 piliers de contenu (éduquer, prouver, coulisses, social proof, offre) adaptés au SaaS. Pour chaque pilier : objectif, exemples de sujets, ton. Livrer dans docs/piliers-contenu.md.", agentId: "vega", estimateMin: 20, tags: ["growth", "planning"], dependsOn: [0] },
+      { title: "Posts LinkedIn (lot de 8)", description: "Rédiger 8 posts LinkedIn prêts à publier pour vendre le SaaS : accroche forte en 1re ligne, corps aéré, valeur concrète, CTA doux. Varier les piliers. Sans jargon ni formules IA. Livrer dans docs/posts-linkedin.md (un post par section, avec l'accroche en titre).", agentId: "plume", estimateMin: 35, tags: ["contenu", "social"], dependsOn: [1] },
+      { title: "Posts X/Twitter & threads (lot de 10)", description: "Rédiger 6 tweets isolés percutants + 2 threads (5-7 tweets chacun) orientés acquisition pour le SaaS. Accroches qui arrêtent le scroll, une idée par tweet. Livrer dans docs/posts-twitter.md.", agentId: "plume", estimateMin: 30, tags: ["contenu", "social"], dependsOn: [1] },
+      { title: "Concepts visuels des posts", description: "Pour 6 posts clés, décrire le visuel (format, composition, texte à l'écran, palette, ambiance) prêt à être produit dans un outil de design. Cohérence de marque. Livrer dans docs/concepts-visuels.md.", agentId: "pixel", estimateMin: 24, tags: ["design", "social"], dependsOn: [2] },
+      { title: "Calendrier de publication 4 semaines", description: "Planifier la diffusion sur 4 semaines (2-3 posts/semaine/plateforme), répartis par pilier, avec date, plateforme, post associé et indicateur à suivre. Inclure une routine d'engagement. Livrer dans docs/calendrier.md.", agentId: "vega", estimateMin: 18, tags: ["planning", "growth"], dependsOn: [2, 3, 4] },
+    ],
+  },
+  {
     keywords: ["email", "emailing", "mailing", "séquence", "sequence", "onboarding"],
     summary: "Campagne d'emailing : segmentation, rédaction, design, automatisation et planification.",
     tasks: [

@@ -23,8 +23,10 @@ Ta mission, dans l'ordre :
 Règles pour le plan :
 - Chaque tâche : titre court orienté livrable, description précise de ce que l'agent doit produire (c'est sa seule consigne, sois exhaustif : inclus le contexte donné par l'utilisateur), agent le plus pertinent, estimation en minutes, 1-3 tags.
 - Utilise \`depends_on\` (indices des tâches prérequises, base 0) quand un livrable en nourrit un autre — ex. la recherche avant la rédaction, la maquette avant l'intégration.
-- Les agents travaillent dans un VRAI dossier projet sur le disque : ils créent et modifient des fichiers. Le résultat final doit être un projet prêt à être lancé directement (préférer du HTML/CSS/JS statique ou des stacks simples sans étape de build quand c'est possible). Formule les tâches en conséquence : précise les fichiers attendus, la structure, les conventions.
-- Les tâches non-code (recherche, contenus, specs) produisent des fichiers markdown dans le projet (ex. docs/analyse.md) que les tâches suivantes consommeront.
+- Les agents travaillent dans un VRAI dossier projet sur le disque : ils créent et modifient des fichiers. Tous les projets ne sont pas des sites web — il peut s'agir d'une campagne de contenu réseaux sociaux, d'une étude, d'une séquence d'emails, d'un plan marketing… Adapte les livrables au besoin réel.
+- Pour un projet logiciel/site : le résultat doit être prêt à être lancé directement (préférer du HTML/CSS/JS statique ou des stacks simples sans build quand c'est possible) ; précise les fichiers, la structure, les conventions.
+- Pour un projet de contenu / marketing / recherche : les livrables sont des fichiers markdown rangés dans docs/ (ex. docs/posts-linkedin.md, docs/calendrier.md, docs/analyse.md) — concrets et prêts à publier/utiliser, pas de méta-commentaire.
+- Les tâches s'appuient sur les fichiers produits par les tâches précédentes (le rédacteur lit la recherche, etc.).
 - La DERNIÈRE tâche du plan doit toujours être une finalisation : vérifier la cohérence de l'ensemble, compléter le README avec les instructions de lancement, s'assurer que le projet démarre tel quel.
 - Si l'utilisateur demande de modifier un plan déjà proposé, appelle à nouveau \`proposer_plan\` avec le plan complet corrigé.
 
