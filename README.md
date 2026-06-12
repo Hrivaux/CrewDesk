@@ -53,6 +53,31 @@ Sans clé, l'app tourne en **simulation** complète (zéro coût) : mêmes
 - Les tâches de démonstration ne déclenchent jamais d'appel API ; seules
   les tâches issues d'un plan validé (ou déplacées à la main) s'exécutent.
 - Une tâche qui échoue deux fois n'est plus relancée automatiquement.
+- **Budget** : le compteur de la barre suit la consommation réelle ($ et
+  tokens). Dès qu'un budget est défini et atteint, **plus aucune nouvelle
+  exécution API n'est lancée** — les tâches restent en file jusqu'à
+  relèvement du budget.
+
+## Persistance
+
+- État (projets, tâches, skills, budget…) persisté **côté serveur** dans
+  `<workspace>/.crewdesk/state-default.json` ; le localStorage sert de
+  cache de chargement instantané et de repli hors-ligne.
+- Durable (survit à un nettoyage de cache), prêt pour le multi-appareils.
+- L'interface `StateStore` (`src/services/server/store.ts`) est la couture
+  où une base (Postgres/Supabase, scopée par utilisateur) se branchera le
+  jour J — sans toucher au reste de l'application.
+
+## Qualité
+
+```bash
+npm run typecheck   # TypeScript strict, zéro any
+npm test            # Vitest — logique pure (iso, xp, pricing, slug)
+npm run build
+```
+
+CI : `.github/workflows/ci.yml` enchaîne typecheck + tests + build à
+chaque push.
 
 ## Architecture
 
@@ -61,7 +86,7 @@ Sans clé, l'app tourne en **simulation** complète (zéro coût) : mêmes
 - `src/services/orchestrator.ts` — interface `IOrchestrator` : mock en
   simulation, API Anthropic en live (routes `src/app/api/*`, clé côté
   serveur uniquement — prêt pour un déploiement multi-utilisateurs)
-- Données persistées en localStorage (v1 personnelle)
+- Persistance derrière `StateStore` (fichier en v1, DB le jour J)
 
 ## Captures
 

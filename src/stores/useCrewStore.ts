@@ -868,44 +868,60 @@ export const useCrewStore = create<CrewState>()(
       name: "crewdesk-v1",
       storage: createJSONStorage(() => localStorage),
       // On ne persiste que les données métier ; l'état runtime des agents repart propre.
-      partialize: (s) => ({
-        tasks: s.tasks,
-        projects: s.projects,
-        activity: s.activity,
-        chatMessages: s.chatMessages,
-        completedTotal: s.completedTotal,
-        spend: s.spend,
-        budgetUSD: s.budgetUSD,
-        skills: s.skills,
-        agentStats: s.agentStats,
-        scenePhase: s.scenePhase,
-        sceneTheme: s.sceneTheme,
-        onboardingDone: s.onboardingDone,
-      }),
+      partialize: persistedSlice,
       // Au rechargement : les tâches en cours retournent en backlog pour être redistribuées.
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<CrewState>;
-        const tasks = (p.tasks ?? []).map((t) =>
-          t.status === "assigned" || t.status === "in_progress"
-            ? { ...t, status: "backlog" as const, progress: 0 }
-            : t,
-        );
-        return {
-          ...current,
-          tasks,
-          projects: p.projects ?? [],
-          activity: p.activity ?? [],
-          chatMessages: p.chatMessages ?? [],
-          completedTotal: p.completedTotal ?? 0,
-          spend: p.spend ?? { inputTokens: 0, outputTokens: 0, costUSD: 0 },
-          budgetUSD: p.budgetUSD ?? null,
-          skills: p.skills ?? [],
-          agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
-          scenePhase: p.scenePhase ?? "day",
-          sceneTheme: p.sceneTheme ?? "mission-control",
-          onboardingDone: p.onboardingDone ?? false,
-        };
-      },
+      merge: (persisted, current) => mergePersisted(persisted, current),
     },
   ),
 );
+
+/** Tranche métier persistée (localStorage et serveur partagent le même format). */
+export function persistedSlice(s: CrewState): Partial<CrewState> {
+  return {
+    tasks: s.tasks,
+    projects: s.projects,
+    activity: s.activity,
+    chatMessages: s.chatMessages,
+    completedTotal: s.completedTotal,
+    spend: s.spend,
+    budgetUSD: s.budgetUSD,
+    skills: s.skills,
+    agentStats: s.agentStats,
+    scenePhase: s.scenePhase,
+    sceneTheme: s.sceneTheme,
+    onboardingDone: s.onboardingDone,
+  };
+}
+
+/** Fusionne une tranche persistée avec l'état courant (runtime agents préservé). */
+export function mergePersisted(
+  persisted: unknown,
+  current: CrewState,
+): CrewState {
+  const p = (persisted ?? {}) as Partial<CrewState>;
+  const tasks = (p.tasks ?? []).map((t) =>
+    t.status === "assigned" || t.status === "in_progress"
+      ? { ...t, status: "backlog" as const, progress: 0 }
+      : t,
+  );
+  return {
+    ...current,
+    tasks,
+    projects: p.projects ?? [],
+    activity: p.activity ?? [],
+    chatMessages: p.chatMessages ?? [],
+    completedTotal: p.completedTotal ?? 0,
+    spend: p.spend ?? { inputTokens: 0, outputTokens: 0, costUSD: 0 },
+    budgetUSD: p.budgetUSD ?? null,
+    skills: p.skills ?? [],
+    agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
+    scenePhase: p.scenePhase ?? "day",
+    sceneTheme: p.sceneTheme ?? "mission-control",
+    onboardingDone: p.onboardingDone ?? false,
+  };
+}
+
+/** Applique un état venu du serveur par-dessus l'état courant. */
+export function hydratePersisted(persisted: unknown): void {
+  useCrewStore.setState((current) => mergePersisted(persisted, current));
+}

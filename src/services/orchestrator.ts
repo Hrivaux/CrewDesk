@@ -577,6 +577,8 @@ export function startSimulation(live: boolean): () => void {
     //    Live : lancement de l'appel API (livrable réel), progression
     //    d'attente qui plafonne à 90 % jusqu'à la réponse.
     const fresh = store.getState();
+    const budgetReached =
+      live && fresh.budgetUSD !== null && fresh.spend.costUSD >= fresh.budgetUSD;
     for (const task of fresh.tasks) {
       if (task.status !== "in_progress") continue;
       const carrier = fresh.agents[task.agentId];
@@ -589,6 +591,7 @@ export function startSimulation(live: boolean): () => void {
         } else if (inflight.has(task.id)) {
           fresh.setTaskProgress(task.id, Math.min(task.progress + 0.9, 90));
         } else if (
+          !budgetReached &&
           inflight.size < MAX_PARALLEL_EXECUTIONS &&
           (!task.projectId || !busyProjects().has(task.projectId))
         ) {
@@ -622,7 +625,11 @@ export function startSimulation(live: boolean): () => void {
     //    plan validé, dont les prérequis sont livrés, et pas plus de deux
     //    échecs (au-delà, réassignation manuelle requise).
     const cur = store.getState();
-    if (now - lastDispatch >= DISPATCH_COOLDOWN_MS) {
+    // Plafond de budget (live) : au-delà, plus aucune nouvelle exécution API
+    // n'est lancée — les tâches restent en file jusqu'à relèvement du budget.
+    const overBudget =
+      live && cur.budgetUSD !== null && cur.spend.costUSD >= cur.budgetUSD;
+    if (!overBudget && now - lastDispatch >= DISPATCH_COOLDOWN_MS) {
       const next = cur.tasks.find((t) => {
         if (t.status !== "backlog" && t.status !== "assigned") return false;
         const rt = cur.agents[t.agentId];
