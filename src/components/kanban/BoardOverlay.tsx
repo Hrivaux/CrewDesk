@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { CreateTask } from "@/components/kanban/CreateTask";
 import { Button } from "@/components/ui/Button";
 
 interface BoardOverlayProps {
@@ -44,9 +45,12 @@ export function BoardOverlay({ open, onClose }: BoardOverlayProps) {
                 <h2 className="font-display text-sm font-bold tracking-wide">Kanban</h2>
                 <span className="label-mono">synchronisé avec la scène</span>
               </div>
-              <Button onClick={onClose} aria-label="Fermer le kanban">
-                Fermer · Échap
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <CreateTask />
+                <Button onClick={onClose} aria-label="Fermer le kanban">
+                  Fermer · Échap
+                </Button>
+              </div>
             </header>
             <div className="min-h-0 flex-1">
               <KanbanBoard />

@@ -117,6 +117,15 @@ export interface CrewState {
   removePendingTask: (index: number) => void;
   /** Création unitaire par Atlas (pipeline de validation du plan). */
   addTask: (task: Task) => void;
+  /** Création manuelle d'une tâche au backlog (depuis le board). */
+  createTask: (input: {
+    title: string;
+    description: string;
+    agentId: AgentId;
+    estimateMin: number;
+    tags: string[];
+    projectId?: string;
+  }) => void;
 
   seedTasks: (tasks: Task[]) => void;
   seedProjects: (projects: Project[]) => void;
@@ -471,6 +480,37 @@ export const useCrewStore = create<CrewState>()(
             task.agentId,
           ),
         })),
+
+      createTask: (input) =>
+        set((s) => {
+          // Source « live » seulement si rattachée à un projet avec dossier
+          // (sinon elle ne sera pas exécutée automatiquement en mode live).
+          const project = input.projectId
+            ? s.projects.find((p) => p.id === input.projectId)
+            : undefined;
+          const task: Task = {
+            id: uid("task"),
+            title: input.title.trim(),
+            description: input.description.trim(),
+            agentId: input.agentId,
+            status: "backlog",
+            progress: 0,
+            estimateMin: Math.max(1, Math.round(input.estimateMin)),
+            tags: input.tags.slice(0, 3),
+            projectId: input.projectId,
+            source: project?.dir ? "live" : "sim",
+            createdAt: Date.now(),
+          };
+          return {
+            tasks: [...s.tasks, task],
+            activity: pushActivity(
+              s.activity,
+              "system",
+              `Nouvelle tâche « ${task.title} » pour ${AGENT_BY_ID[task.agentId].name}`,
+              task.agentId,
+            ),
+          };
+        }),
 
       seedTasks: (tasks) =>
         set((s) => ({
