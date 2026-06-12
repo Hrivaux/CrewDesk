@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import { AuthGate } from "@/components/AuthGate";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SimulationRunner } from "@/components/SimulationRunner";
 import { StateSync } from "@/components/StateSync";
@@ -43,16 +44,18 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${sora.variable} ${inter.variable} ${jetbrains.variable}`}>
       <body className="antialiased">
-        <StateSync />
-        <SimulationRunner />
-        <AuthGate>
-          {children}
-          <TaskDetail />
-          <AgentTraining />
-          <ProjectPreview />
-          <ToastHost />
-          <CommandPalette />
-        </AuthGate>
+        <ErrorBoundary>
+          <StateSync />
+          <SimulationRunner />
+          <AuthGate>
+            {children}
+            <TaskDetail />
+            <AgentTraining />
+            <ProjectPreview />
+            <ToastHost />
+            <CommandPalette />
+          </AuthGate>
+        </ErrorBoundary>
       </body>
     </html>
   );

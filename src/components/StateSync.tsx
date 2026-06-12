@@ -6,6 +6,26 @@ import { hydratePersisted, persistedSlice, useCrewStore } from "@/stores/useCrew
 
 const SAVED_AT_KEY = "crewdesk-savedAt";
 const DEBOUNCE_MS = 1500;
+/** Délai maximum avant sauvegarde, même si le store change en continu. */
+const MAX_WAIT_MS = 8000;
+
+/**
+ * Clé de comparaison ignorant les champs volatils tick-par-tick (progression,
+ * horodatages de runtime) : la progression des tâches en cours n'est de toute
+ * façon pas restaurée au rechargement. Évite d'écrire toutes les 1,5 s pendant
+ * que l'équipe travaille — on ne sauvegarde que les changements significatifs.
+ */
+function syncKey(slice: ReturnType<typeof persistedSlice>): string {
+  const stable = {
+    ...slice,
+    tasks: (slice.tasks ?? []).map((t) => ({
+      ...t,
+      progress: undefined,
+      startedAt: undefined,
+    })),
+  };
+  return JSON.stringify(stable);
+}
 
 /**
  * Persistance durable côté serveur (Supabase si configuré — isolé par
@@ -18,10 +38,29 @@ export function StateSync() {
     const supabase = supabaseBrowser();
     const usesAuth = isSupabaseConfigured();
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let debTimer: ReturnType<typeof setTimeout> | undefined;
+    let maxTimer: ReturnType<typeof setTimeout> | undefined;
     let lastPushed = "";
     let unsubStore: (() => void) | undefined;
     let started = false;
+
+    function clearTimers() {
+      if (debTimer) clearTimeout(debTimer);
+      if (maxTimer) clearTimeout(maxTimer);
+      debTimer = undefined;
+      maxTimer = undefined;
+    }
+
+    function flush() {
+      clearTimers();
+      void push();
+    }
+
+    function scheduleFlush() {
+      if (debTimer) clearTimeout(debTimer);
+      debTimer = setTimeout(flush, DEBOUNCE_MS);
+      maxTimer ??= setTimeout(flush, MAX_WAIT_MS);
+    }
 
     async function authHeader(): Promise<Record<string, string>> {
       if (!supabase) return {};
@@ -32,9 +71,9 @@ export function StateSync() {
 
     async function push() {
       const slice = persistedSlice(useCrewStore.getState());
-      const serialized = JSON.stringify(slice);
-      if (serialized === lastPushed) return;
-      lastPushed = serialized;
+      const key = syncKey(slice);
+      if (key === lastPushed) return;
+      lastPushed = key;
       const savedAt = Date.now();
       try {
         const res = await fetch("/api/state", {
@@ -67,11 +106,8 @@ export function StateSync() {
         /* pas de serveur d'état : on reste sur le localStorage */
       }
       if (cancelled) return;
-      lastPushed = JSON.stringify(persistedSlice(useCrewStore.getState()));
-      unsubStore = useCrewStore.subscribe(() => {
-        if (timer) clearTimeout(timer);
-        timer = setTimeout(() => void push(), DEBOUNCE_MS);
-      });
+      lastPushed = syncKey(persistedSlice(useCrewStore.getState()));
+      unsubStore = useCrewStore.subscribe(scheduleFlush);
     }
 
     if (usesAuth && supabase) {
@@ -86,7 +122,7 @@ export function StateSync() {
         cancelled = true;
         sub.subscription.unsubscribe();
         unsubStore?.();
-        if (timer) clearTimeout(timer);
+        clearTimers();
       };
     }
 
@@ -94,7 +130,7 @@ export function StateSync() {
     return () => {
       cancelled = true;
       unsubStore?.();
-      if (timer) clearTimeout(timer);
+      clearTimers();
     };
   }, []);
 
