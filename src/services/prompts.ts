@@ -100,3 +100,44 @@ Méthode :
 
 Termine par un COURT rapport en markdown (sans re-coller le contenu des fichiers) : ce que tu as produit, les fichiers créés/modifiés, les décisions notables, et ce que la tâche suivante doit savoir.`;
 }
+
+export interface SkillPayload {
+  kind?: string;
+  name: string;
+  description?: string;
+  content: string;
+}
+
+const SKILL_CONTENT_CHARS = 12_000;
+const SKILLS_TOTAL_CHARS = 36_000;
+
+/** Section « entraînement » injectée dans le system prompt d'un agent. */
+export function skillsSection(skills: SkillPayload[]): string {
+  if (skills.length === 0) return "";
+  let budget = SKILLS_TOTAL_CHARS;
+  const parts: string[] = [];
+  for (const skill of skills) {
+    if (budget <= 0) break;
+    const content = skill.content.slice(0, Math.min(SKILL_CONTENT_CHARS, budget));
+    budget -= content.length;
+    parts.push(
+      `## ${skill.kind === "connaissance" ? "Connaissance" : "Skill"} : ${skill.name}` +
+        (skill.description ? `\n_Quand l'appliquer : ${skill.description}_` : "") +
+        `\n\n${content}`,
+    );
+  }
+  return (
+    `\n\n# Ton entraînement (fourni par l'utilisateur — applique-le systématiquement quand c'est pertinent)\n\n` +
+    parts.join("\n\n---\n\n")
+  );
+}
+
+/** Résumé des entraînements de l'équipe, pour qu'Atlas route mieux les tâches. */
+export function teamSkillsSection(team: Partial<Record<string, string[]>>): string {
+  const entries = Object.entries(team).filter(([, names]) => names && names.length > 0);
+  if (entries.length === 0) return "";
+  return (
+    `\n\nEntraînements spécifiques renseignés par l'utilisateur (tiens-en compte pour assigner et décrire les tâches) :\n` +
+    entries.map(([id, names]) => `- ${id} : ${(names ?? []).join(" · ")}`).join("\n")
+  );
+}

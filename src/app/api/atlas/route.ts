@@ -1,7 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import type { AgentId, PlannedTask } from "@/services/types";
-import { ATLAS_SYSTEM, PLAN_TOOL } from "@/services/prompts";
+import {
+  ATLAS_SYSTEM,
+  PLAN_TOOL,
+  skillsSection,
+  teamSkillsSection,
+  type SkillPayload,
+} from "@/services/prompts";
 
 export const maxDuration = 300;
 
@@ -36,8 +42,16 @@ export async function POST(request: Request) {
   }
 
   let turns: ChatTurn[];
+  let atlasSkills: SkillPayload[] = [];
+  let teamSkills: Partial<Record<string, string[]>> = {};
   try {
-    const body = (await request.json()) as { messages?: ChatTurn[] };
+    const body = (await request.json()) as {
+      messages?: ChatTurn[];
+      skills?: SkillPayload[];
+      teamSkills?: Partial<Record<string, string[]>>;
+    };
+    atlasSkills = body.skills ?? [];
+    teamSkills = body.teamSkills ?? {};
     turns = (body.messages ?? []).filter(
       (m) =>
         (m.role === "user" || m.role === "assistant") &&
@@ -69,7 +83,10 @@ export async function POST(request: Request) {
       system: [
         {
           type: "text",
-          text: ATLAS_SYSTEM,
+          text:
+            ATLAS_SYSTEM +
+            teamSkillsSection(teamSkills) +
+            skillsSection(atlasSkills),
           cache_control: { type: "ephemeral" },
         },
       ],

@@ -45,6 +45,14 @@ function PaletteInner({ onClose }: { onClose: () => void }) {
         color: a.color,
         run: () => { router.push("/"); s.selectAgent(a.id); },
       })),
+      ...AGENTS.map((a) => ({
+        id: `former-${a.id}`,
+        group: "Équipe",
+        label: `Entraîner : ${a.name}`,
+        hint: "skills & connaissances",
+        color: a.color,
+        run: () => s.setTrainingAgent(a.id),
+      })),
       ...tasks
         .filter((t) => t.status !== "done")
         .slice(0, 30)

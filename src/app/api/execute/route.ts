@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { agentSystem } from "@/services/prompts";
+import { agentSystem, skillsSection, type SkillPayload } from "@/services/prompts";
 import {
   EXECUTOR_TOOLS,
   projectDir,
@@ -20,6 +20,8 @@ interface ExecutePayload {
   agent: { name: string; role: string; personality: string };
   project: { name: string; objective: string; dir: string };
   context?: Array<{ title: string; agent: string; deliverable: string }>;
+  /** Entraînement de l'agent (skills & connaissances actifs). */
+  skills?: SkillPayload[];
 }
 
 export async function POST(request: Request) {
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
         system: [
           {
             type: "text",
-            text: agentSystem(payload.agent),
+            text: agentSystem(payload.agent) + skillsSection(payload.skills ?? []),
             cache_control: { type: "ephemeral" },
           },
         ],

@@ -7,6 +7,7 @@ import type {
   ActivityKind,
   AgentId,
   AgentRuntime,
+  AgentSkill,
   AgentStats,
   Celebration,
   ChatMessage,
@@ -55,6 +56,22 @@ export interface CrewState {
   pendingPlan: Plan | null;
   /** Compteur d'ondes de commandement d'Atlas (validation de plan). */
   atlasBurst: number;
+
+  /* --- Entraînement des agents (skills & connaissances) --- */
+  skills: AgentSkill[];
+  /** Agent dont le panneau d'entraînement est ouvert. */
+  trainingAgent: AgentId | null;
+
+  addSkill: (
+    skill: Omit<AgentSkill, "id" | "createdAt" | "updatedAt" | "enabled">,
+  ) => void;
+  updateSkill: (
+    id: string,
+    patch: Partial<Pick<AgentSkill, "name" | "description" | "content" | "kind">>,
+  ) => void;
+  toggleSkill: (id: string) => void;
+  removeSkill: (id: string) => void;
+  setTrainingAgent: (id: AgentId | null) => void;
 
   /* --- Progression, notifications, ambiance --- */
   agentStats: Record<AgentId, AgentStats>;
@@ -222,6 +239,42 @@ export const useCrewStore = create<CrewState>()(
       planning: false,
       pendingPlan: null,
       atlasBurst: 0,
+      skills: [],
+      trainingAgent: null,
+
+      addSkill: (skill) =>
+        set((s) => ({
+          skills: [
+            ...s.skills,
+            {
+              ...skill,
+              id: uid("skill"),
+              enabled: true,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+          ],
+        })),
+
+      updateSkill: (id, patch) =>
+        set((s) => ({
+          skills: s.skills.map((sk) =>
+            sk.id === id ? { ...sk, ...patch, updatedAt: Date.now() } : sk,
+          ),
+        })),
+
+      toggleSkill: (id) =>
+        set((s) => ({
+          skills: s.skills.map((sk) =>
+            sk.id === id ? { ...sk, enabled: !sk.enabled, updatedAt: Date.now() } : sk,
+          ),
+        })),
+
+      removeSkill: (id) =>
+        set((s) => ({ skills: s.skills.filter((sk) => sk.id !== id) })),
+
+      setTrainingAgent: (trainingAgent) => set({ trainingAgent }),
+
       agentStats: initialStats(),
       toasts: [],
       queuePressure: false,
@@ -740,6 +793,7 @@ export const useCrewStore = create<CrewState>()(
         activity: s.activity,
         chatMessages: s.chatMessages,
         completedTotal: s.completedTotal,
+        skills: s.skills,
         agentStats: s.agentStats,
         scenePhase: s.scenePhase,
         sceneTheme: s.sceneTheme,
@@ -760,6 +814,7 @@ export const useCrewStore = create<CrewState>()(
           activity: p.activity ?? [],
           chatMessages: p.chatMessages ?? [],
           completedTotal: p.completedTotal ?? 0,
+          skills: p.skills ?? [],
           agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
           scenePhase: p.scenePhase ?? "day",
           sceneTheme: p.sceneTheme ?? "mission-control",

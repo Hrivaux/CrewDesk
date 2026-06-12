@@ -129,6 +129,24 @@ export interface Toast {
 
 export type ScenePhase = "auto" | "day" | "night";
 
+/**
+ * Entraînement d'un agent : skill (savoir-faire) ou connaissance (contexte),
+ * injecté dans son prompt à chaque mission. Propre à chaque agent.
+ */
+export interface AgentSkill {
+  id: string;
+  agentId: AgentId;
+  kind: "skill" | "connaissance";
+  name: string;
+  /** Quand / comment l'utiliser (optionnel). */
+  description?: string;
+  /** Contenu markdown injecté dans le prompt de l'agent. */
+  content: string;
+  enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Paquet lumineux envoyé par Atlas vers le poste d'un agent. */
 export interface DispatchFx {
   id: string;

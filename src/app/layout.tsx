@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SimulationRunner } from "@/components/SimulationRunner";
+import { AgentTraining } from "@/components/hud/AgentTraining";
 import { ToastHost } from "@/components/hud/ToastHost";
 import { TaskDetail } from "@/components/kanban/TaskDetail";
 import "./globals.css";
@@ -42,6 +43,7 @@ export default function RootLayout({
         <SimulationRunner />
         {children}
         <TaskDetail />
+        <AgentTraining />
         <ToastHost />
         <CommandPalette />
       </body>

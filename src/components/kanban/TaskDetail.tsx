@@ -20,18 +20,16 @@ const STATUS_LABEL: Record<string, string> = {
 export function TaskDetail() {
   const selectedTask = useCrewStore((s) => s.selectedTask);
   const setSelectedTask = useCrewStore((s) => s.setSelectedTask);
-  const task = useCrewStore((s) =>
-    s.selectedTask ? s.tasks.find((t) => t.id === s.selectedTask) : undefined,
-  );
-  const project = useCrewStore((s) =>
-    task?.projectId ? s.projects.find((p) => p.id === task.projectId) : undefined,
-  );
-  const deps = useCrewStore((s) =>
-    task?.dependsOnIds
-      ? s.tasks.filter((t) => task.dependsOnIds?.includes(t.id))
-      : [],
-  );
+  const tasks = useCrewStore((s) => s.tasks);
+  const projects = useCrewStore((s) => s.projects);
   const workspaceBase = useCrewStore((s) => s.workspaceBase);
+  const task = selectedTask ? tasks.find((t) => t.id === selectedTask) : undefined;
+  const project = task?.projectId
+    ? projects.find((p) => p.id === task.projectId)
+    : undefined;
+  const deps = task?.dependsOnIds
+    ? tasks.filter((t) => task.dependsOnIds?.includes(t.id))
+    : [];
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {

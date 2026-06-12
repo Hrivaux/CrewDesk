@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import type {
+  AgentId,
+  AgentSkill,
   AtlasReply,
   IOrchestrator,
   Plan,
@@ -139,6 +141,24 @@ export const orchestrator: IOrchestrator = new SimulatedOrchestrator();
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+/** Entraînements actifs d'un agent, au format attendu par les routes API. */
+function activeSkills(agentId: AgentId): Array<{
+  kind: AgentSkill["kind"];
+  name: string;
+  description?: string;
+  content: string;
+}> {
+  return useCrewStore
+    .getState()
+    .skills.filter((s) => s.agentId === agentId && s.enabled)
+    .map((s) => ({
+      kind: s.kind,
+      name: s.name,
+      description: s.description,
+      content: s.content,
+    }));
+}
+
 const PROJECT_COLORS = ["#5EE7FF", "#A777FF", "#3CDFA0", "#FFC94D", "#FF8A4C", "#4D8DFF"];
 
 /**
@@ -174,10 +194,21 @@ export async function askAtlas(request: string): Promise<void> {
         ? `${m.text}\n\n[Un plan a été proposé à l'utilisateur dans l'interface.]`
         : m.text,
     }));
+    // Atlas reçoit son propre entraînement + un résumé de ceux de l'équipe.
+    const allSkills = useCrewStore.getState().skills.filter((s) => s.enabled);
+    const teamSkills: Partial<Record<string, string[]>> = {};
+    for (const skill of allSkills) {
+      if (skill.agentId === "atlas") continue;
+      (teamSkills[skill.agentId] ??= []).push(skill.name);
+    }
     const res = await fetch("/api/atlas", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({
+        messages: history,
+        skills: activeSkills("atlas"),
+        teamSkills,
+      }),
     });
     const data = (await res.json().catch(() => ({}))) as
       | AtlasReply
@@ -440,6 +471,7 @@ async function executeTask(taskId: string): Promise<void> {
         agent: { name: def.name, role: def.role, personality: def.personality },
         project: { name: project.name, objective: project.objective, dir: project.dir },
         context,
+        skills: activeSkills(task.agentId),
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {

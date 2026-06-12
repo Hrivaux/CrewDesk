@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AGENT_BY_ID } from "@/lib/agents";
 import { levelFromXp, levelProgress, xpForLevel } from "@/lib/xp";
 import { useCrewStore } from "@/stores/useCrewStore";
+import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Stat } from "@/components/ui/Stat";
@@ -22,6 +23,12 @@ function relativeTime(at: number): string {
 export function AgentProfile() {
   const selectedAgent = useCrewStore((s) => s.selectedAgent);
   const selectAgent = useCrewStore((s) => s.selectAgent);
+  const setTrainingAgent = useCrewStore((s) => s.setTrainingAgent);
+  const skillCount = useCrewStore((s) =>
+    s.selectedAgent
+      ? s.skills.filter((sk) => sk.agentId === s.selectedAgent && sk.enabled).length
+      : 0,
+  );
   const stats = useCrewStore((s) =>
     s.selectedAgent ? s.agentStats[s.selectedAgent] : null,
   );
@@ -94,6 +101,18 @@ export function AgentProfile() {
           <p className="mt-3 text-[11px] leading-relaxed text-muted italic">
             « {def.personality} »
           </p>
+
+          <Button
+            className="mt-3 w-full justify-center"
+            onClick={() => setTrainingAgent(def.id)}
+          >
+            ✦ Entraîner {def.name}
+            {skillCount > 0 ? (
+              <span className="font-mono text-[9px] text-muted tabular-nums">
+                ({skillCount} actif{skillCount > 1 ? "s" : ""})
+              </span>
+            ) : null}
+          </Button>
 
           <div className="mt-3">
             <div className="flex items-baseline justify-between">
