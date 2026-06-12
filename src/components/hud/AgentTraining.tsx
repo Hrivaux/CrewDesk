@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AgentSkill } from "@/services/types";
 import { AGENT_BY_ID } from "@/lib/agents";
+import { SKILL_LIBRARY } from "@/lib/skillLibrary";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
+
+const MAX_CONTENT = 12_000;
 
 const EMPTY_FORM = { kind: "skill" as AgentSkill["kind"], name: "", description: "", content: "" };
 
@@ -98,9 +101,41 @@ export function AgentTraining() {
   const updateSkill = useCrewStore((s) => s.updateSkill);
   const toggleSkill = useCrewStore((s) => s.toggleSkill);
   const removeSkill = useCrewStore((s) => s.removeSkill);
+  const pushToast = useCrewStore((s) => s.pushToast);
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setEditing(null), [trainingAgent]);
+  useEffect(() => {
+    setEditing(null);
+    setLibraryOpen(false);
+  }, [trainingAgent]);
+
+  const installed = new Set(skills.map((sk) => sk.name.toLowerCase()));
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !trainingAgent) return;
+    let added = 0;
+    for (const file of Array.from(files)) {
+      const text = (await file.text()).slice(0, MAX_CONTENT);
+      if (text.trim() === "") continue;
+      addSkill({
+        agentId: trainingAgent,
+        kind: "connaissance",
+        name: file.name.replace(/\.[^.]+$/, "").slice(0, 80),
+        description: `Importé depuis ${file.name}`,
+        content: text,
+      });
+      added += 1;
+    }
+    if (added > 0) {
+      pushToast({
+        title: `${added} fichier${added > 1 ? "s" : ""} importé${added > 1 ? "s" : ""}`,
+        message: "Ajouté à l'entraînement.",
+        color: "#3CDFA0",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!trainingAgent) return;
@@ -167,7 +202,67 @@ export function AgentTraining() {
             </header>
 
             <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
-              {skills.length === 0 && editing !== "new" ? (
+              {libraryOpen ? (
+                <div className="mb-3 rounded-xl border border-cyan/25 bg-[rgba(94,231,255,0.04)] p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="label-mono" style={{ color: "#5EE7FF" }}>
+                      Bibliothèque · {def.name}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setLibraryOpen(false)}
+                      className="focus-ring label-mono transition-colors hover:text-foreground"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {(SKILL_LIBRARY[def.id] ?? []).map((lib) => {
+                      const already = installed.has(lib.name.toLowerCase());
+                      return (
+                        <div
+                          key={lib.name}
+                          className="rounded-lg border border-[rgba(234,240,248,0.08)] bg-[rgba(7,9,14,0.4)] px-2.5 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                              {lib.name}
+                            </span>
+                            <Button
+                              variant={already ? "ghost" : "primary"}
+                              disabled={already}
+                              onClick={() => {
+                                addSkill({
+                                  agentId: def.id,
+                                  kind: "skill",
+                                  name: lib.name,
+                                  description: lib.description,
+                                  content: lib.content,
+                                });
+                                pushToast({
+                                  title: `Skill installé`,
+                                  message: `« ${lib.name} » ajouté à ${def.name}.`,
+                                  color: def.color,
+                                });
+                              }}
+                            >
+                              {already ? "Installé ✓" : "+ Installer"}
+                            </Button>
+                          </div>
+                          <p className="mt-1 text-[10px] text-muted italic">{lib.description}</p>
+                        </div>
+                      );
+                    })}
+                    {(SKILL_LIBRARY[def.id] ?? []).length === 0 ? (
+                      <p className="text-[11px] text-muted">
+                        Pas encore de skills prêts à l&apos;emploi pour cet agent.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {skills.length === 0 && editing !== "new" && !libraryOpen ? (
                 <div className="rounded-xl border border-dashed border-[rgba(234,240,248,0.12)] px-4 py-6 text-center">
                   <p className="text-xs leading-relaxed text-muted">
                     Aucun entraînement pour l&apos;instant.
@@ -285,15 +380,30 @@ export function AgentTraining() {
             </div>
 
             <footer className="border-t border-[rgba(234,240,248,0.07)] px-5 py-3">
-              <div className="flex items-center justify-between">
-                <span className="label-mono">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".md,.txt,.markdown,text/plain,text/markdown"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  void handleFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="label-mono shrink-0">
                   {skills.filter((s) => s.enabled).length} actif
                   {skills.filter((s) => s.enabled).length > 1 ? "s" : ""} / {skills.length}
                 </span>
                 {editing !== "new" ? (
-                  <Button variant="primary" onClick={() => setEditing("new")}>
-                    + Ajouter un entraînement
-                  </Button>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    <Button onClick={() => setLibraryOpen((o) => !o)}>✦ Bibliothèque</Button>
+                    <Button onClick={() => fileInputRef.current?.click()}>↑ Importer</Button>
+                    <Button variant="primary" onClick={() => setEditing("new")}>
+                      + Ajouter
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             </footer>
