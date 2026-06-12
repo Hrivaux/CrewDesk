@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import type { Project, Task } from "@/services/types";
 import { AGENT_BY_ID } from "@/lib/agents";
+import { formatUSD } from "@/lib/format";
 import type { AgentId } from "@/services/types";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,7 @@ export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
     (t) => t.status === "in_progress" || t.status === "review",
   ).length;
   const progress = tasks.length === 0 ? 0 : (done / tasks.length) * 100;
+  const costUSD = tasks.reduce((sum, t) => sum + (t.usage?.costUSD ?? 0), 0);
   const agentIds = [...new Set(tasks.map((t) => t.agentId))] as AgentId[];
   const remaining = daysLeft(project.deadline);
 
@@ -67,6 +69,7 @@ export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
             {done}/{tasks.length} tâches
           </Chip>
           {inProgress > 0 ? <Chip color="#5EE7FF">{inProgress} en cours</Chip> : null}
+          {costUSD > 0 ? <Chip color="#3CDFA0">{formatUSD(costUSD)}</Chip> : null}
           <Chip color={remaining <= 3 ? "#FF8A4C" : "#FFB35C"}>
             ⏱ {formatDeadline(project.deadline)} · J-{remaining}
           </Chip>

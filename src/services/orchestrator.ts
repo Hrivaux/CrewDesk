@@ -220,6 +220,7 @@ export async function askAtlas(request: string): Promise<void> {
     }
     const s = useCrewStore.getState();
     s.setPlanning(false);
+    if (data.usage) registerSpend(data.usage);
     if (data.type === "plan") {
       s.setPendingPlan(data.plan);
       s.addChatMessage({
@@ -426,6 +427,30 @@ function depsMet(task: Task, tasks: Task[]): boolean {
   });
 }
 
+/** Enregistre la dépense globale et alerte au franchissement du budget. */
+function registerSpend(usage: {
+  inputTokens: number;
+  outputTokens: number;
+  costUSD: number;
+}): void {
+  const before = useCrewStore.getState();
+  const wasOver =
+    before.budgetUSD !== null && before.spend.costUSD >= before.budgetUSD;
+  before.addSpend(usage);
+  const after = useCrewStore.getState();
+  if (
+    after.budgetUSD !== null &&
+    after.spend.costUSD >= after.budgetUSD &&
+    !wasOver
+  ) {
+    after.pushToast({
+      title: "Budget atteint",
+      message: `${after.spend.costUSD.toFixed(2)} $ consommés sur ${after.budgetUSD.toFixed(2)} $.`,
+      color: "#FF8A4C",
+    });
+  }
+}
+
 /** Projets ayant déjà une exécution en vol (1 agent par dossier à la fois). */
 function busyProjects(): Set<string> {
   const s = useCrewStore.getState();
@@ -481,7 +506,12 @@ async function executeTask(taskId: string): Promise<void> {
       report?: string;
       files?: string[];
       error?: string;
+      usage?: { inputTokens: number; outputTokens: number; costUSD: number };
     };
+    if (data.usage) {
+      registerSpend(data.usage);
+      useCrewStore.getState().addTaskUsage(taskId, data.usage);
+    }
     if (!res.ok || !data.report) {
       throw new Error(data.error ?? `HTTP ${res.status}`);
     }

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
+import { TokenMeter } from "@/components/hud/TokenMeter";
 import { Chip } from "@/components/ui/Chip";
 
 function Clock() {
@@ -117,6 +118,7 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-4">
         <Clock />
+        <TokenMeter />
         <ModeChip />
       </div>
     </motion.header>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AGENT_BY_ID } from "@/lib/agents";
+import { formatTokens, formatUSD } from "@/lib/format";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -87,6 +88,12 @@ export function TaskDetail() {
                 <Chip>{STATUS_LABEL[task.status] ?? task.status}</Chip>
                 <Chip>~{task.estimateMin} min</Chip>
                 {project ? <Chip color={project.color}>◆ {project.name}</Chip> : null}
+                {task.usage ? (
+                  <Chip color="#3CDFA0">
+                    {formatUSD(task.usage.costUSD)} ·{" "}
+                    {formatTokens(task.usage.inputTokens + task.usage.outputTokens)} tok
+                  </Chip>
+                ) : null}
               </div>
             </header>
 

@@ -26,6 +26,8 @@ export interface Task {
   files?: string[];
   /** Retour utilisateur en attente : l'agent doit retoucher son travail. */
   revisionNote?: string;
+  /** Consommation API cumulée de la tâche (retouches incluses). */
+  usage?: TaskUsage;
   /** Origine : créée par la simulation ou via un plan validé. */
   source?: "sim" | "live";
   /** Tentatives d'exécution (live) — au-delà de 2, dispatch manuel requis. */
@@ -67,10 +69,17 @@ export interface Plan {
   tasks: PlannedTask[];
 }
 
+/** Consommation API d'un appel ou d'une tâche (mode live). */
+export interface TaskUsage {
+  inputTokens: number;
+  outputTokens: number;
+  costUSD: number;
+}
+
 /** Réponse d'Atlas dans le chat : une question/réponse, ou un plan à valider. */
 export type AtlasReply =
-  | { type: "text"; text: string }
-  | { type: "plan"; text: string; plan: Plan };
+  | { type: "text"; text: string; usage?: TaskUsage }
+  | { type: "plan"; text: string; plan: Plan; usage?: TaskUsage };
 
 /**
  * Couche d'orchestration. V1 : SimulatedOrchestrator (mock).

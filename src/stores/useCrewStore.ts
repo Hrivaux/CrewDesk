@@ -17,6 +17,7 @@ import type {
   ScenePhase,
   Task,
   TaskStatus,
+  TaskUsage,
   Toast,
 } from "@/services/types";
 import { AGENTS, AGENT_BY_ID, agentRender, breakSpot, initialRuntime } from "@/lib/agents";
@@ -46,7 +47,15 @@ export interface CrewState {
   liveMode: boolean;
   /** Dossier de base des projets sur le disque (mode live). */
   workspaceBase: string | null;
+  /** Consommation API cumulée (tokens et $) et budget utilisateur. */
+  spend: { inputTokens: number; outputTokens: number; costUSD: number };
+  budgetUSD: number | null;
   completedTotal: number;
+
+  addSpend: (usage: TaskUsage) => void;
+  addTaskUsage: (taskId: string, usage: TaskUsage) => void;
+  setBudgetUSD: (value: number | null) => void;
+  resetSpend: () => void;
 
   /* --- Chat avec Atlas --- */
   chatMessages: ChatMessage[];
@@ -240,7 +249,41 @@ export const useCrewStore = create<CrewState>()(
       previewProject: null,
       liveMode: false,
       workspaceBase: null,
+      spend: { inputTokens: 0, outputTokens: 0, costUSD: 0 },
+      budgetUSD: null,
       completedTotal: 0,
+
+      addSpend: (usage) =>
+        set((s) => ({
+          spend: {
+            inputTokens: s.spend.inputTokens + usage.inputTokens,
+            outputTokens: s.spend.outputTokens + usage.outputTokens,
+            costUSD: Math.round((s.spend.costUSD + usage.costUSD) * 10_000) / 10_000,
+          },
+        })),
+
+      addTaskUsage: (taskId, usage) =>
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  usage: {
+                    inputTokens: (t.usage?.inputTokens ?? 0) + usage.inputTokens,
+                    outputTokens: (t.usage?.outputTokens ?? 0) + usage.outputTokens,
+                    costUSD:
+                      Math.round(((t.usage?.costUSD ?? 0) + usage.costUSD) * 10_000) /
+                      10_000,
+                  },
+                }
+              : t,
+          ),
+        })),
+
+      setBudgetUSD: (budgetUSD) => set({ budgetUSD }),
+
+      resetSpend: () =>
+        set({ spend: { inputTokens: 0, outputTokens: 0, costUSD: 0 } }),
       chatMessages: [],
       planning: false,
       pendingPlan: null,
@@ -831,6 +874,8 @@ export const useCrewStore = create<CrewState>()(
         activity: s.activity,
         chatMessages: s.chatMessages,
         completedTotal: s.completedTotal,
+        spend: s.spend,
+        budgetUSD: s.budgetUSD,
         skills: s.skills,
         agentStats: s.agentStats,
         scenePhase: s.scenePhase,
@@ -852,6 +897,8 @@ export const useCrewStore = create<CrewState>()(
           activity: p.activity ?? [],
           chatMessages: p.chatMessages ?? [],
           completedTotal: p.completedTotal ?? 0,
+          spend: p.spend ?? { inputTokens: 0, outputTokens: 0, costUSD: 0 },
+          budgetUSD: p.budgetUSD ?? null,
           skills: p.skills ?? [],
           agentStats: { ...initialStats(), ...(p.agentStats ?? {}) },
           scenePhase: p.scenePhase ?? "day",

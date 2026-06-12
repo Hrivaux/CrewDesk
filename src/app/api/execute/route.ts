@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { agentSystem, skillsSection, type SkillPayload } from "@/services/prompts";
+import { addMessageUsage, emptyUsage, priceUsage } from "@/services/server/pricing";
 import {
   EXECUTOR_TOOLS,
   WEB_TOOLS,
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
   ];
   const filesWritten = new Set<string>();
   const tools = webToolsEnabled() ? [...EXECUTOR_TOOLS, ...WEB_TOOLS] : EXECUTOR_TOOLS;
+  const usage = emptyUsage();
 
   try {
     for (let i = 0; i < MAX_ITERATIONS; i++) {
@@ -104,6 +106,7 @@ export async function POST(request: Request) {
         messages,
       });
       const response = await stream.finalMessage();
+      addMessageUsage(usage, response);
 
       if (response.stop_reason === "refusal") {
         return NextResponse.json(
@@ -131,6 +134,7 @@ export async function POST(request: Request) {
         return NextResponse.json({
           report: report || "Tâche terminée.",
           files: [...filesWritten].sort(),
+          usage: priceUsage(usage, MODEL),
         });
       }
 

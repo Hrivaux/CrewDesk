@@ -8,6 +8,7 @@ import {
   teamSkillsSection,
   type SkillPayload,
 } from "@/services/prompts";
+import { addMessageUsage, emptyUsage, priceUsage } from "@/services/server/pricing";
 
 export const maxDuration = 300;
 
@@ -94,10 +95,15 @@ export async function POST(request: Request) {
       messages,
     });
 
+    const usage = emptyUsage();
+    addMessageUsage(usage, response);
+    const pricedUsage = priceUsage(usage, MODEL);
+
     if (response.stop_reason === "refusal") {
       return NextResponse.json({
         type: "text",
         text: "Je ne peux pas traiter cette demande. Reformule ton besoin et je proposerai un plan.",
+        usage: pricedUsage,
       });
     }
 
@@ -130,12 +136,14 @@ export async function POST(request: Request) {
           projectName: input.project_name,
           tasks,
         },
+        usage: pricedUsage,
       });
     }
 
     return NextResponse.json({
       type: "text",
       text: text || "Peux-tu préciser ton besoin ?",
+      usage: pricedUsage,
     });
   } catch (error) {
     if (error instanceof Anthropic.APIError) {
