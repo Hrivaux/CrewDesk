@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
+import { AuthGate } from "@/components/AuthGate";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SimulationRunner } from "@/components/SimulationRunner";
 import { StateSync } from "@/components/StateSync";
@@ -44,12 +45,14 @@ export default function RootLayout({
       <body className="antialiased">
         <StateSync />
         <SimulationRunner />
-        {children}
-        <TaskDetail />
-        <AgentTraining />
-        <ProjectPreview />
-        <ToastHost />
-        <CommandPalette />
+        <AuthGate>
+          {children}
+          <TaskDetail />
+          <AgentTraining />
+          <ProjectPreview />
+          <ToastHost />
+          <CommandPalette />
+        </AuthGate>
       </body>
     </html>
   );

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
+import { AccountChip } from "@/components/hud/AccountChip";
 import { TokenMeter } from "@/components/hud/TokenMeter";
 import { Chip } from "@/components/ui/Chip";
 
@@ -120,6 +121,7 @@ export function TopBar() {
         <Clock />
         <TokenMeter />
         <ModeChip />
+        <AccountChip />
       </div>
     </motion.header>
   );
