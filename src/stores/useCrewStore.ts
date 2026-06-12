@@ -43,6 +43,8 @@ export interface CrewState {
   selectedTask: string | null;
   /** Vrai quand la clé API est configurée : les agents travaillent réellement. */
   liveMode: boolean;
+  /** Dossier de base des projets sur le disque (mode live). */
+  workspaceBase: string | null;
   completedTotal: number;
 
   /* --- Chat avec Atlas --- */
@@ -98,11 +100,12 @@ export interface CrewState {
   beginWork: (agentId: AgentId) => void;
   setTaskProgress: (taskId: string, progress: number) => void;
   /** Travail achevé : la carte part en revue, l'agent rentre en zone pause. */
-  sendToReview: (taskId: string, deliverable?: string) => void;
+  sendToReview: (taskId: string, deliverable?: string, files?: string[]) => void;
   /** Échec d'exécution (live) : la carte retourne au backlog, l'agent rentre. */
   failTask: (taskId: string, message: string) => void;
   setSelectedTask: (id: string | null) => void;
   setLiveMode: (live: boolean) => void;
+  setWorkspaceBase: (base: string | null) => void;
   /** Atlas valide la revue : carte « Terminé » + confettis. */
   approveTask: (taskId: string) => void;
   /** Déplacement manuel d'une carte (drag & drop) avec effets sur la scène. */
@@ -213,6 +216,7 @@ export const useCrewStore = create<CrewState>()(
       hoveredAgent: null,
       selectedTask: null,
       liveMode: false,
+      workspaceBase: null,
       completedTotal: 0,
       chatMessages: [],
       planning: false,
@@ -443,7 +447,7 @@ export const useCrewStore = create<CrewState>()(
           ),
         })),
 
-      sendToReview: (taskId, deliverable) => {
+      sendToReview: (taskId, deliverable, files) => {
         const s = get();
         const task = s.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -459,6 +463,7 @@ export const useCrewStore = create<CrewState>()(
                   progress: 100,
                   reviewAt: Date.now(),
                   deliverable: deliverable ?? t.deliverable,
+                  files: files ?? t.files,
                   error: undefined,
                 }
               : t,
@@ -700,6 +705,8 @@ export const useCrewStore = create<CrewState>()(
       setSelectedTask: (id) => set({ selectedTask: id }),
 
       setLiveMode: (liveMode) => set({ liveMode }),
+
+      setWorkspaceBase: (workspaceBase) => set({ workspaceBase }),
 
       settleAgent: (agentId) => {
         const s = get();

@@ -47,6 +47,11 @@ export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
               {project.name}
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-muted">{project.objective}</p>
+            {project.dir ? (
+              <p className="mt-1.5 truncate font-mono text-[9px] tracking-[0.08em] text-cyan/70">
+                📁 {project.dir}/
+              </p>
+            ) : null}
           </div>
           <ProgressRing value={progress} color={project.color} />
         </div>

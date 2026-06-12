@@ -31,6 +31,7 @@ export function TaskDetail() {
       ? s.tasks.filter((t) => task.dependsOnIds?.includes(t.id))
       : [],
   );
+  const workspaceBase = useCrewStore((s) => s.workspaceBase);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -116,6 +117,29 @@ export function TaskDetail() {
                 </>
               ) : null}
 
+              {task.files && task.files.length > 0 ? (
+                <>
+                  <p className="label-mono mt-4">
+                    Fichiers ({task.files.length})
+                    {project?.dir && workspaceBase ? (
+                      <span className="ml-2 normal-case tracking-normal text-muted/70">
+                        — {workspaceBase}/{project.dir}
+                      </span>
+                    ) : null}
+                  </p>
+                  <ul className="mt-1.5 flex flex-wrap gap-1">
+                    {task.files.map((file) => (
+                      <li
+                        key={file}
+                        className="rounded border border-[rgba(94,231,255,0.2)] bg-[rgba(94,231,255,0.05)] px-1.5 py-0.5 font-mono text-[10px] text-cyan"
+                      >
+                        {file}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
               {task.error ? (
                 <div className="mt-4 rounded-lg border border-[rgba(255,138,76,0.35)] bg-[rgba(255,138,76,0.07)] px-3 py-2">
                   <p className="label-mono" style={{ color: "#FF8A4C" }}>
@@ -126,7 +150,7 @@ export function TaskDetail() {
               ) : null}
 
               <div className="mt-4 flex items-center justify-between gap-2">
-                <p className="label-mono">Livrable</p>
+                <p className="label-mono">Rapport de l&apos;agent</p>
                 {task.deliverable ? (
                   <Button
                     onClick={() => {
@@ -146,7 +170,7 @@ export function TaskDetail() {
                   <p className="rounded-lg border border-dashed border-[rgba(234,240,248,0.1)] px-3 py-5 text-center text-[11px] text-muted">
                     {task.status === "in_progress"
                       ? `${def.name} travaille dessus…`
-                      : "Pas encore de livrable — il apparaîtra ici quand l'agent aura terminé."}
+                      : "Pas encore de rapport — il apparaîtra ici quand l'agent aura terminé."}
                   </p>
                 )}
               </div>

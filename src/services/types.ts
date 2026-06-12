@@ -20,8 +20,10 @@ export interface Task {
   projectId?: string;
   /** Tâches (ids) dont le livrable est requis avant de commencer. */
   dependsOnIds?: string[];
-  /** Résultat produit par l'agent (markdown) en mode live. */
+  /** Résultat produit par l'agent (rapport markdown) en mode live. */
   deliverable?: string;
+  /** Fichiers créés/modifiés dans le dossier projet (chemins relatifs). */
+  files?: string[];
   /** Origine : créée par la simulation ou via un plan validé. */
   source?: "sim" | "live";
   /** Tentatives d'exécution (live) — au-delà de 2, dispatch manuel requis. */
@@ -41,6 +43,8 @@ export interface Project {
   color: string;
   deadline: number;
   createdAt: number;
+  /** Sous-dossier du workspace où les agents travaillent (mode live). */
+  dir?: string;
 }
 
 export interface PlannedTask {

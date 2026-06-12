@@ -10,6 +10,7 @@ import type {
   Task,
 } from "@/services/types";
 import { AGENT_BY_ID } from "@/lib/agents";
+import { slugify } from "@/lib/slug";
 import { useCrewStore } from "@/stores/useCrewStore";
 
 /* -------------------------------------------------------------------------- */
@@ -221,21 +222,34 @@ export async function validatePlan(): Promise<void> {
 
   const color =
     PROJECT_COLORS[store.projects.length % PROJECT_COLORS.length] ?? "#5EE7FF";
+  const name = plan.projectName ?? extractTopic(plan.request);
+  // Dossier unique sur le disque pour ce projet (mode live).
+  const baseSlug = slugify(name);
+  const taken = new Set(store.projects.map((p) => p.dir));
+  let dir = baseSlug;
+  for (let i = 2; taken.has(dir); i++) dir = `${baseSlug}-${i}`;
+
   const project: Project = {
     id: `proj_${Date.now().toString(36)}`,
-    name: plan.projectName ?? extractTopic(plan.request),
+    name,
     objective: plan.request,
     color,
     deadline: Date.now() + 14 * DAY_MS,
     createdAt: Date.now(),
+    dir: live ? dir : undefined,
   };
 
   store.setPendingPlan(null);
   store.seedProjects([project]);
   store.pulseAtlas();
+  const base = store.workspaceBase;
   store.addChatMessage({
     role: "atlas",
-    text: `C'est parti. Je crée le projet « ${project.name} » et je briefe l'équipe…`,
+    text: live
+      ? `C'est parti. Je crée le projet « ${project.name} » — l'équipe travaillera dans ${
+          base ? `${base}/${dir}` : `le dossier ${dir}`
+        }. Je briefe tout le monde…`
+      : `C'est parti. Je crée le projet « ${project.name} » et je briefe l'équipe…`,
   });
 
   // Construit toutes les tâches d'abord pour résoudre les dépendances
@@ -381,7 +395,18 @@ function depsMet(task: Task, tasks: Task[]): boolean {
   });
 }
 
-/** Appelle l'agent (API) et attache le livrable à la tâche. */
+/** Projets ayant déjà une exécution en vol (1 agent par dossier à la fois). */
+function busyProjects(): Set<string> {
+  const s = useCrewStore.getState();
+  const out = new Set<string>();
+  for (const id of inflight) {
+    const t = s.tasks.find((task) => task.id === id);
+    if (t?.projectId) out.add(t.projectId);
+  }
+  return out;
+}
+
+/** Appelle l'agent (API) : il travaille dans le dossier du projet. */
 async function executeTask(taskId: string): Promise<void> {
   const s = useCrewStore.getState();
   const task = s.tasks.find((t) => t.id === taskId);
@@ -390,6 +415,12 @@ async function executeTask(taskId: string): Promise<void> {
   const project = task.projectId
     ? s.projects.find((p) => p.id === task.projectId)
     : undefined;
+  if (!project?.dir) {
+    useCrewStore
+      .getState()
+      .failTask(taskId, "Tâche sans dossier projet — relance-la via un plan d'Atlas.");
+    return;
+  }
   const context = (task.dependsOnIds ?? [])
     .map((id) => s.tasks.find((t) => t.id === id))
     .filter((dep): dep is Task => Boolean(dep?.deliverable))
@@ -407,22 +438,21 @@ async function executeTask(taskId: string): Promise<void> {
       body: JSON.stringify({
         task: { title: task.title, description: task.description, tags: task.tags },
         agent: { name: def.name, role: def.role, personality: def.personality },
-        project: project
-          ? { name: project.name, objective: project.objective }
-          : undefined,
+        project: { name: project.name, objective: project.objective, dir: project.dir },
         context,
       }),
     });
     const data = (await res.json().catch(() => ({}))) as {
-      deliverable?: string;
+      report?: string;
+      files?: string[];
       error?: string;
     };
-    if (!res.ok || !data.deliverable) {
+    if (!res.ok || !data.report) {
       throw new Error(data.error ?? `HTTP ${res.status}`);
     }
     const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
     if (cur && cur.status === "in_progress") {
-      useCrewStore.getState().sendToReview(taskId, data.deliverable);
+      useCrewStore.getState().sendToReview(taskId, data.report, data.files ?? []);
     }
   } catch (error) {
     const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
@@ -493,7 +523,11 @@ export function startSimulation(live: boolean): () => void {
           fresh.sendToReview(task.id);
         } else if (inflight.has(task.id)) {
           fresh.setTaskProgress(task.id, Math.min(task.progress + 0.9, 90));
-        } else if (inflight.size < MAX_PARALLEL_EXECUTIONS) {
+        } else if (
+          inflight.size < MAX_PARALLEL_EXECUTIONS &&
+          (!task.projectId || !busyProjects().has(task.projectId))
+        ) {
+          // Un seul agent à la fois par dossier projet (pas de conflits de fichiers).
           fresh.log(
             "start",
             `${AGENT_BY_ID[task.agentId].name} produit « ${task.title} »…`,
@@ -587,14 +621,18 @@ export function useSimulation(): void {
     let cancelled = false;
     void (async () => {
       let live = false;
+      let workspace: string | null = null;
       try {
         const res = await fetch("/api/health");
-        live = Boolean(((await res.json()) as { live?: boolean }).live);
+        const data = (await res.json()) as { live?: boolean; workspace?: string };
+        live = Boolean(data.live);
+        workspace = data.workspace ?? null;
       } catch {
         live = false;
       }
       if (cancelled) return;
       useCrewStore.getState().setLiveMode(live);
+      useCrewStore.getState().setWorkspaceBase(workspace);
       cleanup = startSimulation(live);
     })();
     return () => {

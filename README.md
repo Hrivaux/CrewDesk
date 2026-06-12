@@ -22,12 +22,19 @@ En live :
 
 - **Atlas** (bouton en bas à droite) pose ses questions de cadrage, puis
   propose un plan validable (tâches, agents, estimations, dépendances).
-- À la validation, les cartes se créent, les agents partent travailler et
-  **produisent de vrais livrables** (markdown : analyses, textes, code…).
-- Les dépendances sont respectées : le rédacteur reçoit le livrable du
-  chercheur en contexte. Maximum 2 exécutions API en parallèle.
-- Cliquer une carte ouvre le détail : consigne, prérequis, **livrable**
-  (avec bouton copier).
+- À la validation, un **vrai dossier projet** est créé sur ton disque
+  (`~/CrewDesk-Projets/<nom-du-projet>/`, configurable via
+  `CREWDESK_WORKSPACE`). Les agents y travaillent comme Claude Code :
+  ils listent, lisent et **écrivent les fichiers réels** du projet.
+  À la fin, le projet est prêt à être lancé (README inclus).
+- Les dépendances sont respectées (le rapport du chercheur nourrit le
+  rédacteur), un seul agent à la fois par dossier, 2 exécutions API max
+  en parallèle.
+- Cliquer une carte ouvre le détail : consigne, prérequis, **fichiers
+  créés** et rapport de l'agent.
+- `CREWDESK_ALLOW_COMMANDS=1` autorise en plus les agents à exécuter
+  des commandes dans le dossier (npm install, build…). Désactivé par
+  défaut : ils documentent alors les commandes dans le README du projet.
 - Tout est suivi en temps réel : diorama, kanban, flux d'activité, toasts.
 
 Sans clé, l'app tourne en **simulation** complète (zéro coût) : mêmes
