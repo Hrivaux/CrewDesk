@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentProps } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows, useGLTF } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/drei";
+import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { AgentPanel } from "@/components/dashboard/AgentPanel";
 import type { SceneSelection } from "@/components/dashboard/AgentPanel";
@@ -32,7 +33,7 @@ function useResponsiveZoom() {
   const [zoom, setZoom] = useState(88);
 
   useEffect(() => {
-    const update = () => setZoom(window.innerWidth < 768 ? 60 : 88);
+    const update = () => setZoom(window.innerWidth < 768 ? 70 : 102);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -218,22 +219,37 @@ export function CrewDeskScene() {
           selectStoreAgent(null);
         }}
       >
-        <color attach="background" args={["#eef3f8"]} />
+        <color attach="background" args={["#f2f6fa"]} />
+        <fog attach="fog" args={["#f2f6fa", 30, 60]} />
         <Suspense fallback={null}>
           <SceneCamera zoom={zoom} />
-          <ambientLight intensity={0.72} />
+
+          {/* Éclairage haut-clé, doux et uniforme : ambiance « maquette
+              de studio » claire et aérée, ombres légères. */}
+          <ambientLight intensity={0.95} />
+          <hemisphereLight args={["#ffffff", "#dbe6f2", 0.75]} />
           <directionalLight
-            position={[5, 8, 5]}
-            intensity={1.42}
+            position={[5, 9, 5]}
+            intensity={1.05}
+            color="#fff6ec"
             castShadow
             shadow-mapSize-width={2048}
             shadow-mapSize-height={2048}
+            shadow-bias={-0.0004}
             shadow-camera-left={-7}
             shadow-camera-right={7}
             shadow-camera-top={7}
             shadow-camera-bottom={-7}
           />
-          <hemisphereLight args={["#ffffff", "#cbd5e1", 0.58]} />
+          <directionalLight position={[-6, 5, -4]} intensity={0.45} color="#eaf3ff" />
+
+          {/* Environnement local (sans HDR externe) pour des reflets doux. */}
+          <Environment resolution={256} frames={1}>
+            <Lightformer intensity={1.3} position={[0, 6, 0]} scale={[12, 12, 1]} color="#ffffff" />
+            <Lightformer intensity={0.8} position={[5, 3, 4]} scale={[7, 7, 1]} color="#eef6ff" />
+            <Lightformer intensity={0.6} position={[-5, 3, -4]} scale={[7, 7, 1]} color="#fff2e2" />
+          </Environment>
+
           <group position={[0, -0.2, 0]} scale={1.08}>
             <SceneModel />
             <SceneSignals blocked={blocked} />
@@ -264,7 +280,15 @@ export function CrewDeskScene() {
               />
             ))}
           </group>
-          <ContactShadows position={[0, -0.23, 0]} opacity={0.27} scale={13} blur={2.8} far={5} />
+          <ContactShadows position={[0, -0.23, 0]} opacity={0.28} scale={14} blur={2.6} far={5} resolution={1024} color="#41506b" />
+
+          {/* Post-traitement discret : léger halo sur les accents émissifs
+              (écrans, signaux) + anticrénelage. Pas de vignette : la pièce
+              reste claire et uniforme, comme la référence studio. */}
+          <EffectComposer multisampling={0}>
+            <Bloom mipmapBlur intensity={0.32} luminanceThreshold={0.9} luminanceSmoothing={0.06} radius={0.5} />
+            <SMAA />
+          </EffectComposer>
         </Suspense>
       </Canvas>
       <SceneStats agents={agents} />
