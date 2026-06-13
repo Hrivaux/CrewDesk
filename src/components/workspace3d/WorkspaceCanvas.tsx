@@ -2,6 +2,8 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, Environment, Line, OrbitControls } from "@react-three/drei";
+import { Bloom, EffectComposer } from "@react-three/postprocessing";
+import * as THREE from "three";
 import { Suspense, useState } from "react";
 import { Agent3D } from "@/components/workspace3d/Agent";
 import { Board } from "@/components/workspace3d/Board";
@@ -46,27 +48,33 @@ export function WorkspaceCanvas() {
       orthographic
       camera={{ position: [7.8, 7.2, 7.8], zoom: 72, near: 0.1, far: 1000 }}
       dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       onPointerUp={() => setDraggingObjectId(null)}
     >
-      <color attach="background" args={["#edf4fb"]} />
-      <fog attach="fog" args={["#edf4fb", 26, 52]} />
+      <color attach="background" args={["#eef5fc"]} />
+      <fog attach="fog" args={["#eef5fc", 30, 58]} />
       <Suspense fallback={null}>
-        <ambientLight intensity={0.78} />
-        <hemisphereLight args={["#ffffff", "#dbeafe", 0.6]} />
+        <ambientLight intensity={0.65} />
+        <hemisphereLight args={["#ffffff", "#cfe0f5", 0.7]} />
+        {/* key light — warm, casts soft shadows */}
         <directionalLight
-          position={[4.5, 8, 5.5]}
-          intensity={1}
-          color="#fff7ed"
+          position={[4.5, 9, 5.5]}
+          intensity={1.15}
+          color="#fff6ea"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
+          shadow-bias={-0.0004}
           shadow-camera-left={-8}
           shadow-camera-right={8}
           shadow-camera-top={8}
           shadow-camera-bottom={-8}
         />
-        <Environment preset="city" />
+        {/* cool fill from the opposite side to keep shadows from going flat */}
+        <directionalLight position={[-6, 5, -4]} intensity={0.4} color="#cfe4ff" />
+        {/* soft rim from behind for that glossy product highlight */}
+        <directionalLight position={[0, 6, -7]} intensity={0.5} color="#ffffff" />
+        <Environment preset="studio" environmentIntensity={0.85} />
         <OrbitControls
           makeDefault
           enableDamping
@@ -94,7 +102,10 @@ export function WorkspaceCanvas() {
         {agents.map((agent) => (
           <Agent3D key={agent.id} agent={agent} selected={selected?.kind === "agent" && selected.id === agent.id} />
         ))}
-        <ContactShadows position={[0, -0.02, 0]} opacity={0.26} scale={13} blur={2.8} far={7} resolution={1024} color="#64748b" />
+        <ContactShadows position={[0, -0.02, 0]} opacity={0.32} scale={14} blur={2.6} far={8} resolution={1024} color="#475569" />
+        <EffectComposer multisampling={4}>
+          <Bloom mipmapBlur intensity={0.5} luminanceThreshold={0.9} luminanceSmoothing={0.3} radius={0.6} />
+        </EffectComposer>
       </Suspense>
     </Canvas>
   );

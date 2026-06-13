@@ -1,4 +1,12 @@
-export type WorkspaceObjectType = "desk" | "whiteboard" | "vault" | "kanban" | "server";
+export type WorkspaceObjectType =
+  | "desk"
+  | "whiteboard"
+  | "vault"
+  | "kanban"
+  | "server"
+  | "meeting"
+  | "plant"
+  | "lamp";
 
 export type WorkspaceTask = "idle" | "work" | "plan" | "secure" | "review" | "deploy";
 
@@ -16,6 +24,8 @@ export type AgentAnimationState =
   | "celebrating";
 
 export type EyeShape = "normal" | "happy" | "focused" | "sleepy" | "alert";
+
+export type AgentModelId = "atlas" | "pixel" | "forge" | "sonar" | "vega";
 
 export interface Vec2 {
   x: number;
@@ -39,6 +49,7 @@ export interface WorkspaceAgent {
   name: string;
   color: string;
   eyeShape: EyeShape;
+  model: AgentModelId;
   role: string;
   position: Vec2;
   rotation: number;
@@ -54,7 +65,9 @@ export interface ObjectDefinition {
   type: WorkspaceObjectType;
   label: string;
   purpose: string;
-  task: WorkspaceTask;
+  /** Decorative objects (plant, lamp) and collaboration props have no assignable task. */
+  task?: WorkspaceTask;
+  decor?: boolean;
   size: ObjectSize;
   color: string;
 }

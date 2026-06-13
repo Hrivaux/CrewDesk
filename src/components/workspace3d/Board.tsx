@@ -28,11 +28,25 @@ export function Board({
   return (
     <group>
       <RoundedBox args={[BOARD_WIDTH + 0.28, 0.22, BOARD_DEPTH + 0.28]} radius={0.22} smoothness={10} position={[0, -0.16, 0]}>
-        <meshStandardMaterial color="#cbd5e1" roughness={0.68} />
+        <meshStandardMaterial color="#c2cedd" roughness={0.6} metalness={0.05} />
       </RoundedBox>
       <RoundedBox args={[BOARD_WIDTH, 0.16, BOARD_DEPTH]} radius={0.18} smoothness={10} position={[0, -0.04, 0]} receiveShadow>
-        <meshStandardMaterial color="#f8fbff" roughness={0.46} metalness={0.02} />
+        <meshPhysicalMaterial color="#f9fcff" roughness={0.35} clearcoat={0.6} clearcoatRoughness={0.4} metalness={0.02} />
       </RoundedBox>
+      {/* blue glowing edge accents along the top rim */}
+      {(
+        [
+          [0, (BOARD_DEPTH + 0.28) / 2, BOARD_WIDTH + 0.28, 0],
+          [0, -(BOARD_DEPTH + 0.28) / 2, BOARD_WIDTH + 0.28, 0],
+          [(BOARD_WIDTH + 0.28) / 2, 0, BOARD_DEPTH + 0.28, Math.PI / 2],
+          [-(BOARD_WIDTH + 0.28) / 2, 0, BOARD_DEPTH + 0.28, Math.PI / 2],
+        ] as const
+      ).map(([x, z, len, rot], i) => (
+        <mesh key={i} position={[x, 0.04, z]} rotation={[0, rot, 0]}>
+          <boxGeometry args={[len, 0.014, 0.03]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={1.6} toneMapped={false} />
+        </mesh>
+      ))}
       <Grid
         position={[0, 0.055, 0]}
         args={[BOARD_WIDTH, BOARD_DEPTH]}
