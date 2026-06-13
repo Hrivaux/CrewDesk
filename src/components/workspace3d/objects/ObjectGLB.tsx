@@ -32,12 +32,11 @@ export function ObjectGLB({ type }: { type: WorkspaceObjectType }) {
       const material = source.clone();
       const isEmissive = material.emissive.getHexString() !== "000000";
       if (isEmissive) {
-        material.toneMapped = false;
-        material.emissiveIntensity = Math.max(material.emissiveIntensity ?? 1, 1.1);
+        material.emissiveIntensity = Math.min(material.emissiveIntensity ?? 1, 0.7);
       } else {
-        material.roughness = Math.min(material.roughness ?? 0.6, 0.34);
-        material.metalness = Math.max(material.metalness ?? 0, 0.04);
-        material.envMapIntensity = 0.95;
+        material.roughness = Math.max(material.roughness ?? 0.6, 0.5);
+        material.metalness = 0;
+        material.envMapIntensity = 0.4;
       }
       material.needsUpdate = true;
       return material;
