@@ -27,7 +27,7 @@ export function InspectorPanel() {
       initial={{ opacity: 0, x: 14 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 28 }}
-      className="pointer-events-auto flex h-full min-h-0 w-80 flex-col rounded-[22px] border border-white/70 bg-slate-950/88 p-4 text-white shadow-[0_24px_90px_rgba(2,6,23,0.35)] backdrop-blur-xl"
+      className="pointer-events-auto flex h-full min-h-0 w-64 flex-col rounded-[20px] border border-white/10 bg-slate-950/92 p-4 text-white shadow-[0_18px_70px_rgba(2,6,23,0.4)] backdrop-blur-sm md:w-80"
     >
       <div className="border-b border-white/10 pb-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">Inspector</p>
