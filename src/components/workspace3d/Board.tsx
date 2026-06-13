@@ -28,10 +28,10 @@ export function Board({
   return (
     <group>
       <RoundedBox args={[BOARD_WIDTH + 0.28, 0.22, BOARD_DEPTH + 0.28]} radius={0.22} smoothness={10} position={[0, -0.16, 0]}>
-        <meshStandardMaterial color="#c2cedd" roughness={0.6} metalness={0.05} />
+        <meshStandardMaterial color="#0b1220" roughness={0.7} metalness={0.1} />
       </RoundedBox>
       <RoundedBox args={[BOARD_WIDTH, 0.16, BOARD_DEPTH]} radius={0.18} smoothness={10} position={[0, -0.04, 0]} receiveShadow>
-        <meshPhysicalMaterial color="#f9fcff" roughness={0.35} clearcoat={0.6} clearcoatRoughness={0.4} metalness={0.02} />
+        <meshPhysicalMaterial color="#16202e" roughness={0.6} clearcoat={0.2} clearcoatRoughness={0.6} metalness={0.05} />
       </RoundedBox>
       {/* blue glowing edge accents along the top rim */}
       {(
@@ -51,13 +51,13 @@ export function Board({
         position={[0, 0.055, 0]}
         args={[BOARD_WIDTH, BOARD_DEPTH]}
         cellSize={0.5}
-        cellThickness={0.45}
-        cellColor="#d8e3ee"
+        cellThickness={0.4}
+        cellColor="#22324a"
         sectionSize={2}
-        sectionThickness={0.65}
-        sectionColor="#b7c7d8"
+        sectionThickness={0.7}
+        sectionColor="#33486a"
         fadeDistance={18}
-        fadeStrength={0.4}
+        fadeStrength={0.5}
         infiniteGrid={false}
       />
       <mesh
