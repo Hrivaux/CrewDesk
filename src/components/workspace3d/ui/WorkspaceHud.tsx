@@ -22,20 +22,20 @@ export function WorkspaceHud() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="pointer-events-auto absolute top-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/70 bg-white/82 px-4 py-2 shadow-xl shadow-slate-950/10 backdrop-blur-xl"
+        className="pointer-events-auto absolute top-3 left-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-white/70 bg-white/90 px-3.5 py-1.5 shadow-lg shadow-slate-950/10 backdrop-blur-sm md:left-1/2 md:-translate-x-1/2 md:px-4 md:py-2"
       >
-        <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">AI Workspace</span>
-        <span className="h-4 w-px bg-slate-200" />
-        <span className="text-xs font-semibold text-slate-700">{objects.length} objects</span>
+        <span className="hidden text-xs font-semibold uppercase tracking-[0.22em] text-slate-400 sm:inline">AI Workspace</span>
+        <span className="hidden h-4 w-px bg-slate-200 sm:inline" />
+        <span className="text-xs font-semibold text-slate-700">{objects.length} objets</span>
         <span className="text-xs font-semibold text-slate-700">{agents.length} agents</span>
-        <span className="text-xs font-semibold text-cyan-700">{moving} moving</span>
-        <span className="text-xs font-semibold text-emerald-700">{active} active</span>
+        <span className="text-xs font-semibold text-cyan-700">{moving} en route</span>
+        <span className="text-xs font-semibold text-emerald-700">{active} actifs</span>
       </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="pointer-events-auto absolute bottom-4 left-1/2 z-20 w-[min(720px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-white/70 bg-white/84 p-3 shadow-2xl shadow-slate-950/12 backdrop-blur-xl"
+        className="pointer-events-auto absolute bottom-4 left-1/2 z-20 hidden w-[min(720px,calc(100%-2rem))] -translate-x-1/2 rounded-2xl border border-white/70 bg-white/90 p-3 shadow-2xl shadow-slate-950/12 backdrop-blur-sm md:block"
       >
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <p className="min-w-0 text-sm font-medium text-slate-700">{statusMessage}</p>

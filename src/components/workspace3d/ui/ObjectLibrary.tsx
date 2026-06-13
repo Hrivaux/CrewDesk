@@ -28,7 +28,7 @@ export function ObjectLibrary() {
       initial={{ opacity: 0, x: -14 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 28 }}
-      className="pointer-events-auto flex h-full min-h-0 w-72 flex-col gap-3 rounded-[22px] border border-white/70 bg-white/78 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur-xl"
+      className="pointer-events-auto flex h-full min-h-0 w-64 flex-col gap-3 rounded-[20px] border border-white/80 bg-white/95 p-3 shadow-[0_18px_60px_rgba(15,23,42,0.2)] backdrop-blur-sm md:w-72"
     >
       <div className="border-b border-slate-200/80 pb-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">Object Library</p>
