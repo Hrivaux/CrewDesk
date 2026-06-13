@@ -56,6 +56,29 @@ export const OBJECT_DEFINITIONS: Record<WorkspaceObjectType, ObjectDefinition> =
     size: { width: 1.2, depth: 1.0 },
     color: "#22c55e",
   },
+  meeting: {
+    type: "meeting",
+    label: "Meeting Table",
+    purpose: "Coordination and collaboration space for the crew.",
+    size: { width: 2.3, depth: 1.7 },
+    color: "#f59e0b",
+  },
+  plant: {
+    type: "plant",
+    label: "Plant",
+    purpose: "Decorative greenery to warm up the workspace.",
+    decor: true,
+    size: { width: 0.7, depth: 0.7 },
+    color: "#16a34a",
+  },
+  lamp: {
+    type: "lamp",
+    label: "Desk Lamp",
+    purpose: "Decorative lighting accent for the board.",
+    decor: true,
+    size: { width: 0.6, depth: 0.6 },
+    color: "#fcd34d",
+  },
 };
 
 export function snapToGrid(value: number): number {
@@ -144,11 +167,12 @@ export function addVec(a: Vec2, b: Vec2): Vec2 {
 
 export function getInteractionPoint(object: WorkspaceObject, task: WorkspaceTask): Vec2 {
   const base = getBaseSize(object.type);
-  const gap = object.type === "desk" && task === "work" ? 0.76 : 0.62;
+  // The desk's chair model sits ~1.12 in front of centre; line the agent up
+  // with it so the seated pose reads correctly. Other objects: stand in front.
   const local =
     object.type === "desk" && task === "work"
-      ? { x: -base.width * 0.22, z: base.depth / 2 + gap }
-      : { x: 0, z: base.depth / 2 + gap };
+      ? { x: 0, z: base.depth / 2 + 0.5 }
+      : { x: 0, z: base.depth / 2 + 0.62 };
 
   return snapPoint(addVec(object.position, rotateLocal(local, object.rotation)));
 }

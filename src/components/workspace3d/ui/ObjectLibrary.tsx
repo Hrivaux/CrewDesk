@@ -5,7 +5,16 @@ import { OBJECT_DEFINITIONS } from "@/systems/collisions";
 import type { WorkspaceObjectType } from "@/types/workspace";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
-const OBJECT_ORDER: WorkspaceObjectType[] = ["desk", "whiteboard", "vault", "kanban", "server"];
+const OBJECT_ORDER: WorkspaceObjectType[] = [
+  "desk",
+  "whiteboard",
+  "vault",
+  "kanban",
+  "server",
+  "meeting",
+  "plant",
+  "lamp",
+];
 
 export function ObjectLibrary() {
   const placementType = useWorkspaceStore((state) => state.placementType);

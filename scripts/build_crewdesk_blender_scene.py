@@ -6,12 +6,14 @@ import bpy
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_DIR = ROOT / "public" / "assets" / "models"
 AGENT_DIR = MODEL_DIR / "agents"
+OBJECT_DIR = MODEL_DIR / "objects"
 SOURCE_DIR = MODEL_DIR / "source"
 
 
 def ensure_dirs():
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     AGENT_DIR.mkdir(parents=True, exist_ok=True)
+    OBJECT_DIR.mkdir(parents=True, exist_ok=True)
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -448,4 +450,138 @@ agents = [
 for agent in agents:
     create_agent(*agent)
 
-print("Built CrewDesk showroom scene and agent GLB exports.")
+
+# ---------------------------------------------------------------------------
+# Placeable workspace objects — each centred on the origin, base on the floor
+# (Blender Z up → glTF Y up) with its interactive "front" facing Blender -Y,
+# which becomes glTF +Z, the side agents approach from in the 3D workspace.
+# ---------------------------------------------------------------------------
+
+def obj_desk():
+    bevelled_cube("desk_rounded_top", (0, 0.12, 0.44), (1.95, 0.82, 0.15), MATS["maple"], 0.085, 8)
+    bevelled_cube("desk_soft_underside", (0, 0.12, 0.28), (1.78, 0.66, 0.2), MATS["maple_dark"], 0.06)
+    for sx in [-0.82, 0.82]:
+        for sy in [-0.22, 0.46]:
+            cylinder(f"desk_leg_{sx}_{sy}", (sx, sy, 0.14), 0.032, 0.54, MATS["metal"], 18)
+    tabletop_monitor("desk_screen", (0, 0.42, 1.02), 0.0, MATS["cyan"], 1.05, 0.52)
+    bevelled_cube("desk_keyboard", (0, -0.04, 0.55), (0.52, 0.18, 0.028), MATS["white"], 0.018)
+    cylinder("desk_mug", (0.66, 0.34, 0.6), 0.07, 0.14, MATS["white"], 24)
+    sphere("desk_plant", (-0.74, 0.34, 0.62), 0.1, MATS["green"], (1, 1, 1.1))
+    # chair sitting at the agent interaction distance (front, -Y), facing the desk
+    chair("desk_chair", (0, -1.12), math.radians(180), MATS["blue"])
+
+
+def obj_whiteboard():
+    upright_panel("whiteboard", (0, 0.0, 1.05), 1.7, 0.9, MATS["violet"], title="PLAN")
+    for sx in [-0.7, 0.7]:
+        leg = cylinder(f"whiteboard_leg_{sx}", (sx, 0.06, 0.34), 0.03, 0.66, MATS["metal"], 18)
+        leg.rotation_euler.x = math.radians(8)
+    bevelled_cube("whiteboard_tray", (0, -0.05, 0.62), (1.4, 0.1, 0.04), MATS["white"], 0.02)
+    # sticky notes on the planning surface
+    for i, mat in enumerate([MATS["yellow"], MATS["orange"], MATS["green"]]):
+        note = bevelled_cube(f"whiteboard_note_{i}", (-0.45 + i * 0.45, -0.075, 0.95), (0.16, 0.012, 0.16), mat, 0.006)
+        note.rotation_euler.y = math.radians(-6 + i * 6)
+
+
+def obj_vault():
+    bevelled_cube("vault_outer_shell", (0, 0, 0.6), (1.0, 0.9, 1.2), MATS["metal"], 0.08)
+    bevelled_cube("vault_door", (0, -0.44, 0.6), (0.78, 0.08, 0.96), MATS["graphite"], 0.05)
+    torus("vault_handle_ring", (-0.16, -0.49, 0.6), 0.2, 0.022, MATS["cyan"], rotation=(math.radians(90), 0, 0))
+    sphere("vault_handle_knob", (-0.16, -0.52, 0.6), 0.07, MATS["white"])
+    bevelled_cube("vault_keypad", (0.26, -0.49, 0.78), (0.2, 0.03, 0.26), MATS["dark"], 0.02)
+    for i in range(3):
+        for j in range(3):
+            sphere(f"vault_key_{i}_{j}", (0.2 + j * 0.06, -0.51, 0.86 - i * 0.07), 0.018, MATS["cyan"] if (i + j) % 2 else MATS["white"])
+
+
+def obj_kanban():
+    bevelled_cube("kanban_glass_panel", (0, 0, 0.96), (1.95, 0.05, 1.4), MATS["glass"], 0.025)
+    for sx in [-0.95, 0, 0.95]:
+        bevelled_cube(f"kanban_edge_{sx}", (sx, 0, 0.96), (0.035, 0.07, 1.48), MATS["glass_edge"], 0.012)
+    for sx in [-0.85, 0.85]:
+        cylinder(f"kanban_leg_{sx}", (sx, 0.05, 0.24), 0.03, 0.48, MATS["metal"], 18)
+    add_text("kanban_title", "KANBAN", (0, -0.04, 1.6), 0.1, MATS["cyan"], rot=(math.radians(90), 0, 0))
+    columns = [(-0.62, MATS["yellow"]), (0.0, MATS["orange"]), (0.62, MATS["green"])]
+    for ci, (x, accent) in enumerate(columns):
+        for row in range(3 - (ci > 1)):
+            card = bevelled_cube(f"kanban_card_{ci}_{row}", (x, -0.04, 1.28 - row * 0.26), (0.44, 0.022, 0.16), accent, 0.012)
+            card.rotation_euler.z = 0
+
+
+def obj_server():
+    bevelled_cube("server_rack_shell", (0, 0, 0.66), (0.86, 0.92, 1.3), MATS["graphite"], 0.06)
+    bevelled_cube("server_dark_face", (0, -0.46, 0.66), (0.62, 0.06, 1.06), MATS["dark"], 0.03)
+    for i in range(6):
+        bevelled_cube(f"server_led_row_{i}", (0, -0.49, 1.06 - i * 0.16), (0.4 - (i % 2) * 0.08, 0.02, 0.03),
+                      MATS["cyan"] if i % 2 else MATS["green"], 0.004)
+    sphere("server_status_dot", (0.3, -0.49, 0.28), 0.04, MATS["green"])
+    bevelled_cube("server_terminal", (0, -0.5, 0.42), (0.5, 0.03, 0.32), MATS["dark"], 0.02)
+    for i in range(3):
+        bevelled_cube(f"server_term_line_{i}", (-0.08, -0.52, 0.5 - i * 0.07), (0.28 - i * 0.05, 0.012, 0.018), MATS["cyan"], 0.003)
+
+
+def obj_meeting():
+    cylinder("meeting_table_top", (0, 0, 0.46), 0.92, 0.12, MATS["white"], 64)
+    cylinder("meeting_table_pillar", (0, 0, 0.22), 0.18, 0.4, MATS["metal"], 32)
+    cylinder("meeting_table_foot", (0, 0, 0.04), 0.42, 0.07, MATS["metal"], 48)
+    cylinder("meeting_center_device", (0, 0, 0.56), 0.13, 0.1, MATS["dark"], 32)
+    torus("meeting_center_glow", (0, 0, 0.62), 0.11, 0.013, MATS["cyan"], rotation=(0, 0, 0))
+    seats = [(-0.95, 0.62), (0.95, 0.62), (-0.95, -0.62), (0.95, -0.62)]
+    accents = [MATS["blue"], MATS["orange"], MATS["green"], MATS["violet"]]
+    for i, ((sx, sy), accent) in enumerate(zip(seats, accents)):
+        bevelled_cube(f"meeting_seat_{i}", (sx, sy, 0.46), (0.44, 0.44, 0.1), accent, 0.07, 8)
+        back_y = sy + (0.2 if sy > 0 else -0.2)
+        bevelled_cube(f"meeting_back_{i}", (sx, back_y, 0.66), (0.44, 0.09, 0.36), accent, 0.07, 8)
+        cylinder(f"meeting_col_{i}", (sx, sy, 0.3), 0.03, 0.3, MATS["metal"], 16)
+
+
+def obj_plant():
+    cylinder("plant_pot", (0, 0, 0.2), 0.2, 0.4, MATS["orange"], 32)
+    cylinder("plant_pot_rim", (0, 0, 0.4), 0.22, 0.05, MATS["orange"], 32)
+    cylinder("plant_soil", (0, 0, 0.41), 0.18, 0.03, MATS["graphite"], 32)
+    leaves = [(0, 0.66, 0, 0.16), (0.12, 0.56, 0.04, 0.14), (-0.1, 0.58, -0.05, 0.14),
+              (0.06, 0.5, 0.12, 0.13), (-0.07, 0.52, 0.1, 0.13), (0.0, 0.74, 0.0, 0.13)]
+    for i, (x, z, y, r) in enumerate(leaves):
+        sphere(f"plant_leaf_{i}", (x, y, z), r, MATS["green"], (1, 1, 1.2))
+
+
+def obj_lamp():
+    cylinder("lamp_base", (0, 0, 0.04), 0.2, 0.07, MATS["metal"], 48)
+    cylinder("lamp_lower_arm", (0, 0.02, 0.34), 0.025, 0.56, MATS["metal"], 16, rotation=(math.radians(15), 0, 0))
+    sphere("lamp_joint", (0, -0.1, 0.6), 0.05, MATS["graphite"])
+    cylinder("lamp_upper_arm", (0, -0.28, 0.62), 0.025, 0.5, MATS["metal"], 16, rotation=(math.radians(72), 0, 0))
+    cylinder("lamp_head", (0, -0.5, 0.56), 0.16, 0.26, MATS["yellow"], 32, rotation=(math.radians(58), 0, 0))
+    sphere("lamp_bulb", (0, -0.54, 0.52), 0.07, MATS["yellow"])
+
+
+WORKSPACE_OBJECTS = {
+    "desk": obj_desk,
+    "whiteboard": obj_whiteboard,
+    "vault": obj_vault,
+    "kanban": obj_kanban,
+    "server": obj_server,
+    "meeting": obj_meeting,
+    "plant": obj_plant,
+    "lamp": obj_lamp,
+}
+
+
+def export_object(name, builder):
+    clear_scene()
+    build_materials()
+    builder()
+    cylinder(
+        f"{name}_contact_shadow",
+        (0, 0, 0.008),
+        0.7,
+        0.005,
+        material(f"{name}_contact_shadow_mat", (0.02, 0.04, 0.07, 0.16), 0.85, 0, 0.16),
+        56,
+    )
+    bpy.ops.export_scene.gltf(filepath=str(OBJECT_DIR / f"{name}.glb"), export_format="GLB", export_apply=True)
+
+
+for object_name, object_builder in WORKSPACE_OBJECTS.items():
+    export_object(object_name, object_builder)
+
+print("Built CrewDesk showroom scene, agent GLBs and placeable object GLBs.")

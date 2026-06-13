@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type {
+  AgentModelId,
   EyeShape,
   SelectionState,
   Vec2,
@@ -38,15 +39,17 @@ interface WorkspaceState {
   rotateObject: (id: string, direction?: 1 | -1) => void;
   deleteObject: (id: string) => void;
   addAgent: () => void;
-  updateAgent: (id: string, patch: Partial<Pick<WorkspaceAgent, "name" | "color" | "eyeShape" | "role">>) => void;
+  updateAgent: (id: string, patch: Partial<Pick<WorkspaceAgent, "name" | "color" | "eyeShape" | "model" | "role">>) => void;
   assignTask: (agentId: string, task: WorkspaceTask) => void;
   advanceAgents: (delta: number) => void;
   canPlacePreview: (point: Vec2, type?: WorkspaceObjectType | null) => boolean;
   resetWorkspace: () => void;
 }
 
-const AGENT_COLORS = ["#38bdf8", "#f97316", "#22c55e", "#8b5cf6", "#eab308", "#fb7185"];
+const AGENT_COLORS = ["#38bdf8", "#22c55e", "#eab308", "#8b5cf6", "#f97316", "#fb7185"];
+const AGENT_NAMES = ["Nova", "Byte", "Kiro", "Luna", "Echo"];
 const EYE_SHAPES: EyeShape[] = ["normal", "happy", "focused", "sleepy", "alert"];
+const AGENT_MODELS: AgentModelId[] = ["atlas", "sonar", "vega", "pixel", "forge"];
 
 function objectId(type: WorkspaceObjectType): string {
   return `${type}-${crypto.randomUUID().slice(0, 8)}`;
@@ -59,9 +62,10 @@ function agentId(): string {
 function createAgent(index: number): WorkspaceAgent {
   return {
     id: agentId(),
-    name: index === 0 ? "Atlas" : `Agent ${index + 1}`,
+    name: AGENT_NAMES[index] ?? `Agent ${index + 1}`,
     color: AGENT_COLORS[index % AGENT_COLORS.length]!,
     eyeShape: EYE_SHAPES[index % EYE_SHAPES.length]!,
+    model: AGENT_MODELS[index % AGENT_MODELS.length]!,
     role: index === 0 ? "Orchestrator" : "Specialist",
     position: { x: -1.5 + index * 0.65, z: 2.2 },
     rotation: 0,

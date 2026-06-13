@@ -2,29 +2,11 @@
 
 import { RoundedBox } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
+import { Suspense } from "react";
 import type { WorkspaceObject } from "@/types/workspace";
 import { OBJECT_DEFINITIONS, getBaseSize } from "@/systems/collisions";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { KanbanBoardModel } from "@/components/workspace3d/objects/KanbanBoard";
-import { SafeVaultModel } from "@/components/workspace3d/objects/SafeVault";
-import { ServerRackModel } from "@/components/workspace3d/objects/ServerRack";
-import { WhiteboardModel } from "@/components/workspace3d/objects/Whiteboard";
-import { WorkDeskModel } from "@/components/workspace3d/objects/WorkDesk";
-
-function ObjectModel({ object }: { object: WorkspaceObject }) {
-  switch (object.type) {
-    case "desk":
-      return <WorkDeskModel />;
-    case "whiteboard":
-      return <WhiteboardModel />;
-    case "vault":
-      return <SafeVaultModel />;
-    case "kanban":
-      return <KanbanBoardModel />;
-    case "server":
-      return <ServerRackModel />;
-  }
-}
+import { ObjectGLB } from "@/components/workspace3d/objects/ObjectGLB";
 
 export function PlaceableObject({
   object,
@@ -47,7 +29,9 @@ export function PlaceableObject({
 
   return (
     <group position={[object.position.x, 0, object.position.z]} rotation={[0, object.rotation, 0]} onPointerDown={handlePointerDown}>
-      <ObjectModel object={object} />
+      <Suspense fallback={null}>
+        <ObjectGLB type={object.type} />
+      </Suspense>
       <RoundedBox args={[size.width + 0.16, 0.04, size.depth + 0.16]} radius={0.08} smoothness={6} position={[0, 0.045, 0]}>
         <meshStandardMaterial
           color={definition.color}
