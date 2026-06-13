@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useThree } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 
 export function SceneCamera({ zoom }: { zoom: number }) {
   const camera = useThree((state) => state.camera);
@@ -19,5 +20,22 @@ export function SceneCamera({ zoom }: { zoom: number }) {
     }
   }, [camera, zoom]);
 
-  return null;
+  return (
+    <OrbitControls
+      makeDefault
+      enableDamping
+      dampingFactor={0.08}
+      enablePan
+      enableRotate
+      enableZoom
+      minPolarAngle={0.72}
+      maxPolarAngle={1.08}
+      minAzimuthAngle={-Math.PI / 4}
+      maxAzimuthAngle={Math.PI / 4}
+      minZoom={48}
+      maxZoom={118}
+      target={[0, 0.1, 0.2]}
+      screenSpacePanning={false}
+    />
+  );
 }

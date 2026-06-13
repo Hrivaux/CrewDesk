@@ -14,6 +14,9 @@ const sectionVariants = {
   show: { opacity: 1, y: 0 },
 };
 
+const COCKPIT_AGENT_IDS = new Set(["atlas", "pixel", "forge", "sonar", "vega"]);
+const COCKPIT_AGENTS = AGENTS.filter((agent) => COCKPIT_AGENT_IDS.has(agent.id));
+
 export function SidePanel() {
   const mounted = useMounted();
   const tasks = useCrewStore((s) => s.tasks);
@@ -22,7 +25,10 @@ export function SidePanel() {
   const inProgress = tasks.filter((t) => t.status === "in_progress").length;
   const queued = tasks.filter((t) => t.status === "backlog" || t.status === "assigned").length;
   const activeAgents = useCrewStore(
-    (s) => Object.values(s.agents).filter((a) => a.status === "working" && !AGENT_BY_ID[a.id].isOrchestrator).length,
+    (s) =>
+      Object.values(s.agents).filter(
+        (a) => COCKPIT_AGENT_IDS.has(a.id) && a.status === "working" && !AGENT_BY_ID[a.id].isOrchestrator,
+      ).length,
   );
 
   return (
@@ -48,7 +54,7 @@ export function SidePanel() {
         <Panel className="pb-2">
           <PanelHeader title="Équipe" hint={`${mounted ? activeAgents : 0}/5 actifs`} />
           <div className="flex flex-col gap-0.5 px-2">
-            {AGENTS.map((def) => (
+            {COCKPIT_AGENTS.map((def) => (
               <AgentRow key={def.id} def={def} />
             ))}
           </div>

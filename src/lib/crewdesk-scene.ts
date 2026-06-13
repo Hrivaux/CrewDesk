@@ -63,6 +63,8 @@ export interface SceneAgent extends SceneAgentBase {
   lastAction: string;
 }
 
+export type NavPoint = [number, number, number];
+
 export const STATUS_LABEL: Record<VisualStatus, string> = {
   idle: "Idle",
   working: "Working",
@@ -85,8 +87,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Planning Zone",
     shortName: "Planning",
     function: "Priorisation, backlog, routage des tâches et lookup mémoire.",
-    position: [-2.55, 0.05, -0.82],
-    hitbox: [2.25, 0.16, 1.65],
+    position: [-2.75, 0.05, -1.2],
+    hitbox: [2.28, 0.16, 1.32],
     color: "#8b5cf6",
     plugins: ["Linear", "Calendar", "Memory"],
   },
@@ -95,8 +97,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Coding Zone",
     shortName: "Code",
     function: "Développement, terminal, commits, PR et intégrations API.",
-    position: [-0.22, 0.05, -0.04],
-    hitbox: [2.42, 0.16, 1.82],
+    position: [-0.35, 0.05, -1.12],
+    hitbox: [2.28, 0.16, 1.28],
     color: "#22d3ee",
     plugins: ["GitHub", "Figma", "Terminal"],
   },
@@ -105,8 +107,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Review Zone",
     shortName: "Review",
     function: "Validation des livrables, checks PR et retours à corriger.",
-    position: [2.25, 0.05, -1.04],
-    hitbox: [1.82, 0.16, 1.45],
+    position: [2.35, 0.05, -1.2],
+    hitbox: [1.95, 0.16, 1.26],
     color: "#f97316",
     plugins: ["GitHub", "Slack"],
   },
@@ -115,8 +117,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "QA Zone",
     shortName: "QA",
     function: "Tests, recherche, validation navigateur et détection de bugs.",
-    position: [1.68, 0.05, 1.3],
-    hitbox: [1.86, 0.16, 1.45],
+    position: [1.75, 0.05, 1.62],
+    hitbox: [1.98, 0.16, 1.3],
     color: "#22c55e",
     plugins: ["Browser", "Docs"],
   },
@@ -125,8 +127,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Deploy Zone",
     shortName: "Deploy",
     function: "Pipeline Vercel, état production, monitoring et rollback.",
-    position: [-2.62, 0.05, 1.36],
-    hitbox: [2.15, 0.16, 1.58],
+    position: [-2.7, 0.05, 1.62],
+    hitbox: [2.14, 0.16, 1.3],
     color: "#eab308",
     plugins: ["Vercel", "Logs", "Security"],
   },
@@ -135,8 +137,8 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Security Gate",
     shortName: "Security",
     function: "Validation humaine, permissions, accès sensibles et secrets.",
-    position: [2.68, 0.05, 0.9],
-    hitbox: [1.15, 0.18, 1.22],
+    position: [2.72, 0.05, 0.9],
+    hitbox: [1.15, 0.18, 1.18],
     color: "#fb7185",
     plugins: ["Security", "Memory"],
   },
@@ -145,22 +147,22 @@ export const SCENE_ZONES: Record<SceneZoneId, SceneZone> = {
     name: "Memory Vault",
     shortName: "Memory",
     function: "Contexte long terme, documents, décisions et mémoire projet.",
-    position: [-3.5, 0.05, 0.72],
-    hitbox: [1.1, 0.18, 1.65],
+    position: [-3.85, 0.05, -0.18],
+    hitbox: [1.08, 0.18, 1.4],
     color: "#38bdf8",
     plugins: ["Memory", "Docs"],
   },
 };
 
 export const SCENE_PLUGINS: ScenePlugin[] = [
-  { id: "GitHub", label: "GitHub", function: "PR, branches et commits", position: [-0.95, 0.74, -2.25], color: "#22d3ee" },
-  { id: "Figma", label: "Figma", function: "Maquettes et composants UI", position: [-3.35, 0.74, -1.85], color: "#8b5cf6" },
-  { id: "Linear", label: "Linear", function: "Tickets, backlog et priorités", position: [-2.28, 0.74, -2.25], color: "#eab308" },
-  { id: "Slack", label: "Slack", function: "Messages et alertes équipe", position: [3.52, 0.74, -1.35], color: "#22c55e" },
-  { id: "Browser", label: "Browser", function: "Recherche et vérification web", position: [3.58, 0.92, 0.0], color: "#22d3ee" },
-  { id: "Vercel", label: "Vercel", function: "Builds et production", position: [-1.86, 0.74, 2.15], color: "#07111f" },
-  { id: "Calendar", label: "Calendar", function: "Planning et jalons", position: [-3.62, 0.74, -0.45], color: "#f97316" },
-  { id: "Memory", label: "Memory", function: "Contexte, docs et secrets", position: [-3.48, 0.92, 1.34], color: "#38bdf8" },
+  { id: "GitHub", label: "GitHub", function: "PR, branches et commits", position: [-0.92, 0.74, -2.25], color: "#22d3ee" },
+  { id: "Figma", label: "Figma", function: "Maquettes et composants UI", position: [-3.65, 0.74, -2.22], color: "#8b5cf6" },
+  { id: "Linear", label: "Linear", function: "Tickets, backlog et priorités", position: [-2.06, 0.74, -2.25], color: "#eab308" },
+  { id: "Slack", label: "Slack", function: "Messages et alertes équipe", position: [3.58, 0.74, -1.58], color: "#22c55e" },
+  { id: "Browser", label: "Browser", function: "Recherche et vérification web", position: [3.72, 0.92, 0.2], color: "#22d3ee" },
+  { id: "Vercel", label: "Vercel", function: "Builds et production", position: [-1.72, 0.74, 2.42], color: "#07111f" },
+  { id: "Calendar", label: "Calendar", function: "Planning et jalons", position: [-4.0, 0.74, -1.25], color: "#f97316" },
+  { id: "Memory", label: "Memory", function: "Contexte, docs et secrets", position: [-4.0, 0.92, 0.75], color: "#38bdf8" },
 ];
 
 export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
@@ -172,7 +174,7 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
     color: "#22d3ee",
     skills: ["Planning", "Routing", "Prioritization", "Memory lookup"],
     plugins: ["Linear", "Calendar", "Memory"],
-    homePosition: [-2.72, 0, -0.86],
+    homePosition: [-2.92, 0, 0.36],
     labelOffset: [-0.16, 0.46, -0.06],
     defaultZone: "planning",
     fallbackTask: "Priorise le backlog produit",
@@ -188,7 +190,7 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
     color: "#f97316",
     skills: ["Frontend", "Design system", "UX", "Dashboard UI"],
     plugins: ["Figma", "GitHub"],
-    homePosition: [-0.54, 0, -0.18],
+    homePosition: [-0.62, 0, 0.34],
     labelOffset: [0.22, 0.18, 0.05],
     defaultZone: "coding",
     fallbackTask: "Améliore le dashboard analytics",
@@ -204,7 +206,7 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
     color: "#5f93e8",
     skills: ["Code", "Refactor", "Debugging", "API integration"],
     plugins: ["GitHub", "Terminal"],
-    homePosition: [0.16, 0, 0.1],
+    homePosition: [0.24, 0, 0.34],
     labelOffset: [0.22, 0.04, 0.1],
     defaultZone: "coding",
     fallbackTask: "En attente de review",
@@ -220,7 +222,7 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
     color: "#22c55e",
     skills: ["Testing", "Research", "Validation", "Bug detection"],
     plugins: ["Browser", "Docs"],
-    homePosition: [1.56, 0, 1.22],
+    homePosition: [1.62, 0, 0.78],
     labelOffset: [0.2, 0.34, -0.06],
     defaultZone: "qa",
     fallbackTask: "Teste la synchronisation Kanban",
@@ -236,7 +238,7 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
     color: "#eab308",
     skills: ["Release", "Monitoring", "Deployment", "Rollback"],
     plugins: ["Vercel", "Logs", "Security"],
-    homePosition: [-2.62, 0, 1.38],
+    homePosition: [-2.72, 0, 0.84],
     labelOffset: [-0.04, 0.52, 0.14],
     defaultZone: "deploy",
     fallbackTask: "Attend une validation humaine",
@@ -247,12 +249,43 @@ export const SCENE_AGENT_BASES: readonly SceneAgentBase[] = [
 ] as const;
 
 const ZONE_OFFSETS: Record<SceneAgentBase["id"], [number, number, number]> = {
-  atlas: [-0.22, 0, -0.1],
-  pixel: [-0.18, 0, 0.16],
-  forge: [0.24, 0, 0.02],
-  sonar: [0.18, 0, -0.14],
-  vega: [0.06, 0, 0.22],
+  atlas: [-0.2, 0, 0.62],
+  pixel: [-0.22, 0, 0.68],
+  forge: [0.28, 0, 0.68],
+  sonar: [-0.14, 0, -0.72],
+  vega: [-0.06, 0, -0.78],
 };
+
+export const MAIN_WALKWAY_Z = 0.52;
+export const CROSS_WALKWAY_X = 0.1;
+
+export const ZONE_ENTRY_POINTS: Record<SceneZoneId, NavPoint> = {
+  planning: [-2.75, 0, MAIN_WALKWAY_Z],
+  coding: [-0.35, 0, MAIN_WALKWAY_Z],
+  review: [2.35, 0, MAIN_WALKWAY_Z],
+  qa: [1.75, 0, MAIN_WALKWAY_Z],
+  deploy: [-2.7, 0, MAIN_WALKWAY_Z],
+  security: [2.72, 0, MAIN_WALKWAY_Z],
+  memory: [-3.35, 0, MAIN_WALKWAY_Z],
+};
+
+function samePoint(a: NavPoint, b: NavPoint, epsilon = 0.04) {
+  return Math.abs(a[0] - b[0]) < epsilon && Math.abs(a[2] - b[2]) < epsilon;
+}
+
+export function routeToTarget(from: NavPoint, target: NavPoint, zoneId: SceneZoneId): NavPoint[] {
+  const entry = ZONE_ENTRY_POINTS[zoneId];
+  const route: NavPoint[] = [
+    [from[0], 0, from[2]],
+    [from[0], 0, MAIN_WALKWAY_Z],
+    [CROSS_WALKWAY_X, 0, MAIN_WALKWAY_Z],
+    [entry[0], 0, entry[2]],
+    [target[0], 0, entry[2]],
+    target,
+  ];
+
+  return route.filter((point, index) => index === 0 || !samePoint(point, route[index - 1]!));
+}
 
 export function taskToVisualStatus(task: Task | undefined, runtime: AgentStatus | undefined): VisualStatus {
   if (task?.error || task?.revisionNote) return "blocked";

@@ -24,7 +24,7 @@ import {
 } from "@/lib/crewdesk-scene";
 import { useCrewStore } from "@/stores/useCrewStore";
 
-const COCKPIT_MODEL = "/assets/models/crewdesk-cockpit.glb";
+const SCENE_MODEL = "/assets/models/crewdesk-scene.glb";
 
 type CanvasCamera = ComponentProps<typeof Canvas>["camera"];
 
@@ -72,8 +72,8 @@ function useSceneAgents() {
   );
 }
 
-function CockpitModel() {
-  const gltf = useGLTF(COCKPIT_MODEL);
+function SceneModel() {
+  const gltf = useGLTF(SCENE_MODEL);
   const model = useMemo(() => {
     const clone = gltf.scene.clone(true);
     clone.traverse((object) => {
@@ -235,7 +235,7 @@ export function CrewDeskScene() {
           />
           <hemisphereLight args={["#ffffff", "#cbd5e1", 0.58]} />
           <group position={[0, -0.2, 0]} scale={1.08}>
-            <CockpitModel />
+            <SceneModel />
             <SceneSignals blocked={blocked} />
             {Object.values(SCENE_ZONES).map((zone) => (
               <WorkZone
@@ -283,4 +283,4 @@ export function CrewDeskScene() {
   );
 }
 
-useGLTF.preload(COCKPIT_MODEL);
+useGLTF.preload(SCENE_MODEL);
