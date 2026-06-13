@@ -82,6 +82,36 @@ function taskMessage(task: WorkspaceTask): string {
   return task === "idle" ? "Agent is idle." : `${TASK_LABELS[task]} task assigned.`;
 }
 
+/** A ready-to-use office layout (Blender objects) shown by default on the
+ *  Scène page — two desks, a whiteboard, kanban, server, vault, a meeting
+ *  table and a plant, none overlapping and all inside the board bounds. */
+const DEFAULT_LAYOUT: Array<{ type: WorkspaceObjectType; position: Vec2; rotation: number }> = [
+  { type: "desk", position: { x: -4.3, z: -2.5 }, rotation: 0 },
+  { type: "desk", position: { x: -1.6, z: -2.5 }, rotation: 0 },
+  { type: "whiteboard", position: { x: 1.0, z: -2.7 }, rotation: 0 },
+  { type: "kanban", position: { x: 3.6, z: -2.6 }, rotation: 0 },
+  { type: "server", position: { x: 5.0, z: 0.0 }, rotation: 0 },
+  { type: "vault", position: { x: -5.0, z: 0.2 }, rotation: 0 },
+  { type: "meeting", position: { x: 1.2, z: 1.6 }, rotation: 0 },
+  { type: "plant", position: { x: 4.8, z: 2.6 }, rotation: 0 },
+];
+
+function createDefaultObjects(): WorkspaceObject[] {
+  return DEFAULT_LAYOUT.map((entry) => ({ id: objectId(entry.type), ...entry }));
+}
+
+const DEFAULT_AGENT_STARTS: Vec2[] = [
+  { x: -3, z: 3.2 },
+  { x: -1.5, z: 3.2 },
+  { x: 0, z: 3.2 },
+  { x: 1.5, z: 3.2 },
+  { x: 3, z: 3.2 },
+];
+
+function createDefaultAgents(): WorkspaceAgent[] {
+  return DEFAULT_AGENT_STARTS.map((position, index) => ({ ...createAgent(index), position }));
+}
+
 function resolveTaskPath(
   agent: WorkspaceAgent,
   task: WorkspaceTask,
@@ -171,12 +201,12 @@ function resolveAgentSeparation(agents: WorkspaceAgent[]): WorkspaceAgent[] {
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
-  objects: [],
-  agents: [createAgent(0)],
+  objects: createDefaultObjects(),
+  agents: createDefaultAgents(),
   selected: null,
   placementType: null,
   hoverPoint: null,
-  statusMessage: "Select an object from the library, then click the board to place it.",
+  statusMessage: "Pick an agent, then assign a task — it walks to the matching station and gets to work.",
 
   addObjectMode: (type) =>
     set({
@@ -355,11 +385,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
   resetWorkspace: () =>
     set({
-      objects: [],
-      agents: [createAgent(0)],
+      objects: createDefaultObjects(),
+      agents: createDefaultAgents(),
       selected: null,
       placementType: null,
       hoverPoint: null,
-      statusMessage: "Workspace reset. Add objects to start assigning tasks.",
+      statusMessage: "Workspace reset to the default layout.",
     }),
 }));
