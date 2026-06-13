@@ -94,6 +94,11 @@ export function TaskDetail() {
                     {formatTokens(task.usage.inputTokens + task.usage.outputTokens)} tok
                   </Chip>
                 ) : null}
+                {task.commit ? (
+                  <Chip color="#A777FF" className="font-mono">
+                    ⎇ {task.commit}
+                  </Chip>
+                ) : null}
               </div>
             </header>
 

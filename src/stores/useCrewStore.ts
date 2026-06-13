@@ -138,7 +138,7 @@ export interface CrewState {
   beginWork: (agentId: AgentId) => void;
   setTaskProgress: (taskId: string, progress: number) => void;
   /** Travail achevé : la carte part en revue, l'agent rentre en zone pause. */
-  sendToReview: (taskId: string, deliverable?: string, files?: string[]) => void;
+  sendToReview: (taskId: string, deliverable?: string, files?: string[], commit?: string) => void;
   /** Échec d'exécution (live) : la carte retourne au backlog, l'agent rentre. */
   failTask: (taskId: string, message: string) => void;
   /** Retouche : l'agent reprend son travail avec le retour de l'utilisateur. */
@@ -595,7 +595,7 @@ export const useCrewStore = create<CrewState>()(
           ),
         })),
 
-      sendToReview: (taskId, deliverable, files) => {
+      sendToReview: (taskId, deliverable, files, commit) => {
         const s = get();
         const task = s.tasks.find((t) => t.id === taskId);
         if (!task) return;
@@ -612,6 +612,7 @@ export const useCrewStore = create<CrewState>()(
                   reviewAt: Date.now(),
                   deliverable: deliverable ?? t.deliverable,
                   files: files ?? t.files,
+                  commit: commit ?? t.commit,
                   revisionNote: undefined,
                   error: undefined,
                 }

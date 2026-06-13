@@ -15,6 +15,7 @@ import { addMessageUsage, emptyUsage, priceUsage } from "@/services/server/prici
 import {
   EXECUTOR_TOOLS,
   WEB_TOOLS,
+  commitProject,
   projectDir,
   runTool,
   webToolsEnabled,
@@ -122,9 +123,11 @@ export async function POST(request: Request) {
 
         const toolUses = openAIFunctionCalls(response);
         if (toolUses.length === 0) {
+          const commit = await commitProject(root, `${payload.agent.name} — ${payload.task.title}`);
           return NextResponse.json({
             report: extractOpenAIText(response) || "Tâche terminée.",
             files: [...filesWritten].sort(),
+            commit,
             usage: {
               ...openAIUsage,
               costUSD: Math.round(openAIUsage.costUSD * 10_000) / 10_000,
@@ -196,9 +199,11 @@ export async function POST(request: Request) {
           .map((b) => b.text)
           .join("\n")
           .trim();
+        const commit = await commitProject(root, `${payload.agent.name} — ${payload.task.title}`);
         return NextResponse.json({
           report: report || "Tâche terminée.",
           files: [...filesWritten].sort(),
+          commit,
           usage: priceUsage(usage, ai.model),
         });
       }

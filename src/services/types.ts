@@ -26,6 +26,8 @@ export interface Task {
   deliverable?: string;
   /** Fichiers créés/modifiés dans le dossier projet (chemins relatifs). */
   files?: string[];
+  /** Commit git créé dans le dossier projet à la fin de la tâche. */
+  commit?: string;
   /** Retour utilisateur en attente : l'agent doit retoucher son travail. */
   revisionNote?: string;
   /** Consommation API cumulée de la tâche (retouches incluses). */

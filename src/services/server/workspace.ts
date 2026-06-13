@@ -40,6 +40,44 @@ export async function projectDir(slug: string): Promise<string> {
   return dir;
 }
 
+/**
+ * Historise le dossier projet : un commit git par tâche terminée.
+ * Tolérant : renvoie null (sans bruit) si git est absent ou si rien n'a changé.
+ */
+export async function commitProject(
+  root: string,
+  message: string,
+): Promise<string | null> {
+  const git = (args: string[]) =>
+    execFileAsync("git", args, { cwd: root, timeout: 30_000, maxBuffer: 1024 * 1024 });
+  try {
+    try {
+      await fs.access(path.join(root, ".git"));
+    } catch {
+      await git(["init", "-q"]);
+    }
+    await git(["add", "-A"]);
+    const { stdout: status } = await git(["status", "--porcelain"]);
+    if (!status.trim()) return null;
+    await git([
+      "-c",
+      "user.name=CrewDesk",
+      "-c",
+      "user.email=agents@crewdesk.local",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-q",
+      "-m",
+      message.slice(0, 200),
+    ]);
+    const { stdout } = await git(["rev-parse", "--short", "HEAD"]);
+    return stdout.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Résout un chemin relatif à l'intérieur du projet — refuse toute évasion. */
 function resolveInside(root: string, relPath: string): string {
   const target = path.resolve(root, relPath);

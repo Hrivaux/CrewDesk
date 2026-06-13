@@ -522,6 +522,7 @@ async function executeTask(taskId: string): Promise<void> {
     const data = (await res.json().catch(() => ({}))) as {
       report?: string;
       files?: string[];
+      commit?: string | null;
       error?: string;
       usage?: { inputTokens: number; outputTokens: number; costUSD: number };
     };
@@ -534,7 +535,9 @@ async function executeTask(taskId: string): Promise<void> {
     }
     const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
     if (cur && cur.status === "in_progress") {
-      useCrewStore.getState().sendToReview(taskId, data.report, data.files ?? []);
+      useCrewStore
+        .getState()
+        .sendToReview(taskId, data.report, data.files ?? [], data.commit ?? undefined);
     }
   } catch (error) {
     const cur = useCrewStore.getState().tasks.find((t) => t.id === taskId);
