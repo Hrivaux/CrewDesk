@@ -100,16 +100,41 @@ function createDefaultObjects(): WorkspaceObject[] {
   return DEFAULT_LAYOUT.map((entry) => ({ id: objectId(entry.type), ...entry }));
 }
 
-const DEFAULT_AGENT_STARTS: Vec2[] = [
-  { x: -3, z: 3.2 },
-  { x: -1.5, z: 3.2 },
-  { x: 0, z: 3.2 },
-  { x: 1.5, z: 3.2 },
-  { x: 3, z: 3.2 },
+/** The five specialists, with stable ids matching the orchestrator crew so
+ *  the Scène page can drive each robot from Atlas's task assignments. */
+const SPECIALISTS: Array<{
+  id: string;
+  name: string;
+  color: string;
+  model: AgentModelId;
+  eyeShape: EyeShape;
+  role: string;
+  start: Vec2;
+}> = [
+  { id: "pixel", name: "Pixel", color: "#FF8A4C", model: "pixel", eyeShape: "focused", role: "Design & Frontend", start: { x: -3, z: 3.2 } },
+  { id: "forge", name: "Forge", color: "#4D8DFF", model: "forge", eyeShape: "normal", role: "Développement", start: { x: -1.5, z: 3.2 } },
+  { id: "sonar", name: "Sonar", color: "#3CDFA0", model: "sonar", eyeShape: "alert", role: "Recherche & Analyse", start: { x: 0, z: 3.2 } },
+  { id: "plume", name: "Plume", color: "#A777FF", model: "atlas", eyeShape: "happy", role: "Contenu & Rédaction", start: { x: 1.5, z: 3.2 } },
+  { id: "vega", name: "Vega", color: "#FFC94D", model: "vega", eyeShape: "sleepy", role: "Deploy & Release", start: { x: 3, z: 3.2 } },
 ];
 
 function createDefaultAgents(): WorkspaceAgent[] {
-  return DEFAULT_AGENT_STARTS.map((position, index) => ({ ...createAgent(index), position }));
+  return SPECIALISTS.map((spec) => ({
+    id: spec.id,
+    name: spec.name,
+    color: spec.color,
+    eyeShape: spec.eyeShape,
+    model: spec.model,
+    role: spec.role,
+    position: spec.start,
+    rotation: Math.PI,
+    task: "idle",
+    animationState: "idle",
+    targetObjectId: null,
+    path: [],
+    pathIndex: 0,
+    message: "En attente d'une tâche.",
+  }));
 }
 
 function resolveTaskPath(
