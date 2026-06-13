@@ -33,7 +33,7 @@ function useResponsiveZoom() {
   const [zoom, setZoom] = useState(88);
 
   useEffect(() => {
-    const update = () => setZoom(window.innerWidth < 768 ? 72 : 104);
+    const update = () => setZoom(window.innerWidth < 768 ? 68 : 96);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -119,7 +119,7 @@ function SceneSignals({ blocked }: { blocked: boolean }) {
 
   return (
     <group>
-      <group ref={terminal} position={[-0.34, 1.05, -0.26]}>
+      <group ref={terminal} position={[-2.25, 1.08, 0.9]}>
         {[0, 1, 2, 3].map((index) => (
           <mesh key={index} position={[0.02, -index * 0.07, 0]}>
             <boxGeometry args={[0.42 - index * 0.05, 0.015, 0.012]} />
@@ -127,19 +127,19 @@ function SceneSignals({ blocked }: { blocked: boolean }) {
           </mesh>
         ))}
       </group>
-      <mesh ref={deploy} position={[-2.58, 0.82, 1.63]}>
+      <mesh ref={deploy} position={[1.95, 0.84, 0.38]}>
         <boxGeometry args={[0.92, 0.045, 0.04]} />
         <meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.72} />
       </mesh>
-      <mesh ref={slack} position={[3.52, 0.92, -1.2]}>
+      <mesh ref={slack} position={[2.85, 0.92, -1.62]}>
         <sphereGeometry args={[0.07, 20, 14]} />
         <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.72} />
       </mesh>
-      <mesh ref={vault} position={[-3.55, 0.89, 0.55]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh ref={vault} position={[-3.85, 0.9, -0.76]} rotation={[-Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.5, 0.014, 12, 64]} />
         <meshStandardMaterial color="#22d3ee" emissive="#22d3ee" emissiveIntensity={0.54} transparent opacity={0.78} />
       </mesh>
-      <mesh ref={security} position={[2.68, 0.92, 0.9]}>
+      <mesh ref={security} position={[1.15, 1.02, 0.86]}>
         <boxGeometry args={[0.72, 0.04, 0.04]} />
         <meshStandardMaterial color={blocked ? "#fb7185" : "#22d3ee"} emissive={blocked ? "#fb7185" : "#22d3ee"} emissiveIntensity={0.92} />
       </mesh>
@@ -226,11 +226,11 @@ export function CrewDeskScene() {
 
           {/* Éclairage haut-clé, doux et uniforme : ambiance « maquette
               de studio » claire et aérée, ombres légères. */}
-          <ambientLight intensity={0.95} />
-          <hemisphereLight args={["#ffffff", "#dbe6f2", 0.75]} />
+          <ambientLight intensity={0.76} />
+          <hemisphereLight args={["#ffffff", "#dbe6f2", 0.58]} />
           <directionalLight
             position={[5, 9, 5]}
-            intensity={1.05}
+            intensity={0.88}
             color="#fff6ec"
             castShadow
             shadow-mapSize-width={2048}
@@ -241,13 +241,13 @@ export function CrewDeskScene() {
             shadow-camera-top={7}
             shadow-camera-bottom={-7}
           />
-          <directionalLight position={[-6, 5, -4]} intensity={0.45} color="#eaf3ff" />
+          <directionalLight position={[-6, 5, -4]} intensity={0.32} color="#eaf3ff" />
 
           {/* Environnement local (sans HDR externe) pour des reflets doux. */}
           <Environment resolution={256} frames={1}>
-            <Lightformer intensity={1.3} position={[0, 6, 0]} scale={[12, 12, 1]} color="#ffffff" />
-            <Lightformer intensity={0.8} position={[5, 3, 4]} scale={[7, 7, 1]} color="#eef6ff" />
-            <Lightformer intensity={0.6} position={[-5, 3, -4]} scale={[7, 7, 1]} color="#fff2e2" />
+            <Lightformer intensity={0.9} position={[0, 6, 0]} scale={[12, 12, 1]} color="#ffffff" />
+            <Lightformer intensity={0.5} position={[5, 3, 4]} scale={[7, 7, 1]} color="#eef6ff" />
+            <Lightformer intensity={0.38} position={[-5, 3, -4]} scale={[7, 7, 1]} color="#fff2e2" />
           </Environment>
 
           <group position={[0, -0.2, 0]} scale={1.08}>
@@ -286,7 +286,7 @@ export function CrewDeskScene() {
               (écrans, signaux) + anticrénelage. Pas de vignette : la pièce
               reste claire et uniforme, comme la référence studio. */}
           <EffectComposer multisampling={0}>
-            <Bloom mipmapBlur intensity={0.32} luminanceThreshold={0.9} luminanceSmoothing={0.06} radius={0.5} />
+            <Bloom mipmapBlur intensity={0.14} luminanceThreshold={1.05} luminanceSmoothing={0.08} radius={0.42} />
             <SMAA />
           </EffectComposer>
         </Suspense>

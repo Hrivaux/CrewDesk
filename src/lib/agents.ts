@@ -66,9 +66,9 @@ export const AGENTS: readonly AgentDef[] = [
   {
     id: "vega",
     name: "Vega",
-    role: "Marketing & Planning",
+    role: "Deploy & Release",
     color: "#FFC94D",
-    personality: "Énergique. Pense en roadmaps et en jalons.",
+    personality: "Rigoureuse. Surveille les releases, les validations et les rollbacks.",
     idleSpot: { gx: 6.2, gy: 7.4 },
     workSpot: { gx: 6.2, gy: 7.4 },
   },

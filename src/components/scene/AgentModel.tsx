@@ -149,7 +149,7 @@ export function AgentModel({
           opacity={selected ? 0.92 : 0.58}
         />
       </mesh>
-      <primitive ref={body} object={model} scale={1.24} />
+      <primitive ref={body} object={model} scale={0.88} />
       {(hovered || selected) ? (
         <FloatingLabel
           position={[
