@@ -36,11 +36,12 @@ function AgentPaths() {
   );
 }
 
-export function WorkspaceCanvas() {
+export function WorkspaceCanvas({ mode = "edit" }: { mode?: "edit" | "play" }) {
   const objects = useWorkspaceStore((state) => state.objects);
   const agents = useWorkspaceStore((state) => state.agents);
   const selected = useWorkspaceStore((state) => state.selected);
   const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null);
+  const editable = mode === "edit";
 
   return (
     <Canvas
@@ -96,6 +97,7 @@ export function WorkspaceCanvas() {
             key={object.id}
             object={object}
             selected={selected?.kind === "object" && selected.id === object.id}
+            interactive={editable}
             onDragStart={setDraggingObjectId}
           />
         ))}

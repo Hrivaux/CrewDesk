@@ -59,6 +59,7 @@ function Logo() {
 
 const NAV = [
   { href: "/", label: "Scène" },
+  { href: "/configurer", label: "Configurer" },
   { href: "/board", label: "Board" },
   { href: "/projects", label: "Projets" },
 ] as const;
