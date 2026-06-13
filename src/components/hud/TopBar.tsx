@@ -8,6 +8,7 @@ import { useMounted } from "@/lib/useMounted";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { AccountChip } from "@/components/hud/AccountChip";
 import { TokenMeter } from "@/components/hud/TokenMeter";
+import { WorkspacePanel } from "@/components/hud/WorkspacePanel";
 import { Chip } from "@/components/ui/Chip";
 
 function Clock() {
@@ -137,6 +138,7 @@ export function TopBar() {
           <span className="hidden sm:inline-flex">
             <Clock />
           </span>
+          <WorkspacePanel />
           <TokenMeter />
           <ModeChip />
           <AccountChip />

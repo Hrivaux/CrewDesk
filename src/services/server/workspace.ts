@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -12,8 +12,40 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+/** Fichier où l'on persiste le dossier de travail choisi depuis l'UI (local). */
+function overrideFile(): string {
+  return path.join(os.homedir(), ".crewdesk", "workspace-base");
+}
+
+/**
+ * Dossier de base des projets. Priorité : variable d'env (immuable) >
+ * dossier choisi dans l'UI (mode local) > défaut ~/CrewDesk-Projets.
+ */
 export function workspaceBase(): string {
-  return process.env.CREWDESK_WORKSPACE ?? path.join(os.homedir(), "CrewDesk-Projets");
+  if (process.env.CREWDESK_WORKSPACE) return process.env.CREWDESK_WORKSPACE;
+  try {
+    const saved = readFileSync(overrideFile(), "utf8").trim();
+    if (saved) return saved;
+  } catch {
+    /* pas d'override : on prend le défaut */
+  }
+  return path.join(os.homedir(), "CrewDesk-Projets");
+}
+
+/** Le dossier est-il verrouillé par variable d'env (non modifiable depuis l'UI) ? */
+export function workspaceLocked(): boolean {
+  return Boolean(process.env.CREWDESK_WORKSPACE);
+}
+
+/** Change le dossier de travail (mode local uniquement). Chemin absolu requis. */
+export function setWorkspaceBase(dir: string): void {
+  const trimmed = dir.trim();
+  if (!path.isAbsolute(trimmed)) {
+    throw new Error("Indique un chemin absolu (ex. /Users/moi/Projets).");
+  }
+  mkdirSync(path.dirname(overrideFile()), { recursive: true });
+  mkdirSync(trimmed, { recursive: true });
+  writeFileSync(overrideFile(), trimmed, "utf8");
 }
 
 export function commandsAllowed(): boolean {
