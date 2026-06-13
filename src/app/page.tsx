@@ -28,8 +28,11 @@ export default function Home() {
           className="glass relative min-h-[72svh] flex-1 overflow-hidden rounded-2xl lg:min-h-0 lg:basis-[65%]"
           aria-label="Scène de l'équipe"
         >
-          {/* The Blender board, driven automatically by Atlas via the crew bridge. */}
-          <WorkspaceCanvas mode="play" />
+          {/* The Blender board, driven automatically by Atlas via the crew bridge.
+              absolute inset-0 gives the R3F canvas a definite size to fill. */}
+          <div className="absolute inset-0">
+            <WorkspaceCanvas mode="play" />
+          </div>
           <CrewBridge />
           <div className="absolute top-3 right-3 z-10">
             <Button variant="primary" onClick={() => setBoardOpen(true)}>

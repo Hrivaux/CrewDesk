@@ -52,8 +52,8 @@ export function WorkspaceCanvas({ mode = "edit" }: { mode?: "edit" | "play" }) {
       gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
       onPointerUp={() => setDraggingObjectId(null)}
     >
-      <color attach="background" args={["#eef5fc"]} />
-      <fog attach="fog" args={["#eef5fc", 30, 58]} />
+      {/* transparent background so the board sits on the page (dark on the
+          Scène page, light on Configurer) — avoids the washed-out white veil */}
       <Suspense fallback={null}>
         <ambientLight intensity={0.65} />
         <hemisphereLight args={["#ffffff", "#cfe0f5", 0.7]} />
@@ -106,7 +106,7 @@ export function WorkspaceCanvas({ mode = "edit" }: { mode?: "edit" | "play" }) {
         ))}
         <ContactShadows position={[0, -0.02, 0]} opacity={0.32} scale={14} blur={2.6} far={8} resolution={1024} color="#475569" />
         <EffectComposer multisampling={4}>
-          <Bloom mipmapBlur intensity={0.5} luminanceThreshold={0.9} luminanceSmoothing={0.3} radius={0.6} />
+          <Bloom mipmapBlur intensity={0.32} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.5} />
         </EffectComposer>
       </Suspense>
     </Canvas>
