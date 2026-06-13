@@ -9,10 +9,20 @@ import { useCrewStore } from "@/stores/useCrewStore";
 import { PlanCard } from "@/components/chat/PlanCard";
 import { TypingDots } from "@/components/chat/TypingDots";
 
-const SUGGESTIONS = [
-  "Je veux lancer une landing page pour mon app de fitness",
-  "Prépare une séquence d'emails de bienvenue",
-  "Organise un webinaire de lancement pour la bêta",
+interface Starter {
+  icon: string;
+  label: string;
+  prompt: string;
+}
+
+/** Démarrages rapides : montrent d'un coup l'étendue de l'équipe. */
+const STARTERS: Starter[] = [
+  { icon: "🖥️", label: "Landing page", prompt: "Je veux une landing page pour mon SaaS, prête à lancer" },
+  { icon: "📣", label: "Campagne LinkedIn", prompt: "Crée-moi une campagne de contenu LinkedIn pour vendre mon SaaS" },
+  { icon: "🔍", label: "Étude de marché", prompt: "Fais une étude de marché et une analyse concurrentielle de mon secteur" },
+  { icon: "✉️", label: "Séquence d'emails", prompt: "Prépare une séquence d'emails de bienvenue et d'activation" },
+  { icon: "✍️", label: "Article de blog SEO", prompt: "Écris un article de blog optimisé SEO sur mon sujet" },
+  { icon: "🚀", label: "Plan de lancement", prompt: "Organise le lancement de ma bêta : plan, canaux et calendrier" },
 ];
 
 function AtlasAvatar() {
@@ -145,21 +155,28 @@ export function ChatPanel({ open, onClose }: ChatPanelProps) {
             aria-live="polite"
           >
             {mounted && messages.length === 0 ? (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 <p className="text-xs leading-relaxed text-muted">
                   Décris ton besoin en langage naturel — je le découpe en tâches et je
-                  briefe l&apos;équipe.
+                  briefe l&apos;équipe. Ou pars d&apos;un démarrage rapide :
                 </p>
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => send(s)}
-                    className="focus-ring rounded-xl border border-[rgba(94,231,255,0.2)] bg-[rgba(94,231,255,0.05)] px-3 py-2 text-left text-[11px] text-foreground/85 transition-colors hover:bg-[rgba(94,231,255,0.1)]"
-                  >
-                    {s}
-                  </button>
-                ))}
+                <div className="grid grid-cols-2 gap-2">
+                  {STARTERS.map((s) => (
+                    <button
+                      key={s.label}
+                      type="button"
+                      onClick={() => send(s.prompt)}
+                      className="focus-ring flex flex-col gap-1 rounded-xl border border-[rgba(94,231,255,0.2)] bg-[rgba(94,231,255,0.05)] px-3 py-2.5 text-left transition-colors hover:bg-[rgba(94,231,255,0.12)]"
+                    >
+                      <span className="text-base leading-none" aria-hidden>
+                        {s.icon}
+                      </span>
+                      <span className="text-[11px] font-medium text-foreground/90">
+                        {s.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
             {mounted
