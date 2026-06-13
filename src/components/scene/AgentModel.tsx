@@ -53,13 +53,22 @@ export function AgentModel({
       const nextMaterials = materials.map((sourceMaterial) => {
         if (!(sourceMaterial instanceof THREE.Material)) return sourceMaterial;
         const material = sourceMaterial.clone();
-        if (
-          material instanceof THREE.MeshStandardMaterial &&
-          (object.name.toLowerCase().includes("status") || object.name.toLowerCase().includes("beacon"))
-        ) {
-          material.color.set(STATUS_COLOR[agent.status]);
-          material.emissive.set(STATUS_COLOR[agent.status]);
-          material.emissiveIntensity = 0.9;
+        if (material instanceof THREE.MeshStandardMaterial) {
+          const name = object.name.toLowerCase();
+          if (name.includes("status") || name.includes("beacon")) {
+            material.color.set(STATUS_COLOR[agent.status]);
+            material.emissive.set(STATUS_COLOR[agent.status]);
+            material.emissiveIntensity = 0.9;
+          } else {
+            // Fini « plastique bonbon » : brillant, plus saturé, capte les
+            // reflets de l'environnement — proche des figurines de la réf.
+            material.roughness = Math.min(material.roughness ?? 0.6, 0.32);
+            material.metalness = Math.max(material.metalness ?? 0, 0.04);
+            material.envMapIntensity = 0.9;
+            const hsl = { h: 0, s: 0, l: 0 };
+            material.color.getHSL(hsl);
+            material.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.28), hsl.l);
+          }
           material.needsUpdate = true;
         }
         return material;
@@ -140,7 +149,7 @@ export function AgentModel({
           opacity={selected ? 0.92 : 0.58}
         />
       </mesh>
-      <primitive ref={body} object={model} scale={0.96} />
+      <primitive ref={body} object={model} scale={1.24} />
       {(hovered || selected) ? (
         <FloatingLabel
           position={[

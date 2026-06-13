@@ -12,7 +12,7 @@ export function SceneCamera({ zoom }: { zoom: number }) {
 
   useEffect(() => {
     camera.position.set(7.2, 7.4, 7.2);
-    camera.lookAt(0, 0.16, 0);
+    camera.lookAt(0, 0.22, 0);
     camera.updateProjectionMatrix();
   }, [camera]);
 
@@ -51,8 +51,8 @@ export function SceneCamera({ zoom }: { zoom: number }) {
       minAzimuthAngle={-Math.PI / 4}
       maxAzimuthAngle={Math.PI / 4}
       minZoom={48}
-      maxZoom={118}
-      target={[0, 0.1, 0.2]}
+      maxZoom={140}
+      target={[0, 0.18, 0.2]}
       screenSpacePanning={false}
     />
   );

@@ -33,7 +33,7 @@ function useResponsiveZoom() {
   const [zoom, setZoom] = useState(88);
 
   useEffect(() => {
-    const update = () => setZoom(window.innerWidth < 768 ? 70 : 102);
+    const update = () => setZoom(window.innerWidth < 768 ? 72 : 104);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
