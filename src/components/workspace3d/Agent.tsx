@@ -46,22 +46,21 @@ function RobotModel({ agent }: { agent: WorkspaceAgent }) {
         const isEmissive = material.emissive.getHexString() !== "000000";
         const luminance = material.color.r * 0.299 + material.color.g * 0.587 + material.color.b * 0.114;
         if (isEmissive) {
-          // visor glow, status beacon, halos → expression accent
+          // visor glow, status beacon, halos → expression accent (soft, not neon)
           material.color.copy(accent);
           material.emissive.copy(accent);
-          material.emissiveIntensity = 1.7;
-          material.toneMapped = false;
+          material.emissiveIntensity = 0.85;
         } else if (luminance < 0.12) {
-          // visor glass, feet → keep dark, make it glossy
-          material.roughness = 0.12;
-          material.metalness = 0.1;
-          material.envMapIntensity = 1;
+          // visor glass, feet → dark, lightly satined
+          material.roughness = 0.45;
+          material.metalness = 0.04;
+          material.envMapIntensity = 0.45;
         } else {
-          // body shell → candy plastic in the agent colour
+          // body shell → soft matte plastic in the agent colour
           material.color.copy(body);
-          material.roughness = 0.2;
-          material.metalness = 0.05;
-          material.envMapIntensity = 0.95;
+          material.roughness = 0.5;
+          material.metalness = 0.02;
+          material.envMapIntensity = 0.45;
         }
         material.needsUpdate = true;
         return material;

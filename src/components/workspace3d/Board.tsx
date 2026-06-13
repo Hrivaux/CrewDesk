@@ -44,7 +44,7 @@ export function Board({
       ).map(([x, z, len, rot], i) => (
         <mesh key={i} position={[x, 0.04, z]} rotation={[0, rot, 0]}>
           <boxGeometry args={[len, 0.014, 0.03]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={1.6} toneMapped={false} />
+          <meshStandardMaterial color="#3b82f6" emissive="#1d4ed8" emissiveIntensity={0.45} />
         </mesh>
       ))}
       <Grid

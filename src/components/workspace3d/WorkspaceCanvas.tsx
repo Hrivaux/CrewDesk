@@ -2,7 +2,6 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, Environment, Line, OrbitControls } from "@react-three/drei";
-import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { Suspense, useState } from "react";
 import { Agent3D } from "@/components/workspace3d/Agent";
@@ -75,7 +74,7 @@ export function WorkspaceCanvas({ mode = "edit" }: { mode?: "edit" | "play" }) {
         <directionalLight position={[-6, 5, -4]} intensity={0.4} color="#cfe4ff" />
         {/* soft rim from behind for that glossy product highlight */}
         <directionalLight position={[0, 6, -7]} intensity={0.5} color="#ffffff" />
-        <Environment preset="studio" environmentIntensity={0.85} />
+        <Environment preset="studio" environmentIntensity={0.4} />
         <OrbitControls
           makeDefault
           enableDamping
@@ -105,9 +104,6 @@ export function WorkspaceCanvas({ mode = "edit" }: { mode?: "edit" | "play" }) {
           <Agent3D key={agent.id} agent={agent} selected={selected?.kind === "agent" && selected.id === agent.id} />
         ))}
         <ContactShadows position={[0, -0.02, 0]} opacity={0.32} scale={14} blur={2.6} far={8} resolution={1024} color="#475569" />
-        <EffectComposer multisampling={4}>
-          <Bloom mipmapBlur intensity={0.32} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.5} />
-        </EffectComposer>
       </Suspense>
     </Canvas>
   );
