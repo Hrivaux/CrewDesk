@@ -3,10 +3,9 @@
 import { motion } from "framer-motion";
 import { useCrewStore } from "@/stores/useCrewStore";
 import { ChatDock } from "@/components/chat/ChatDock";
-import { Diorama } from "@/components/scene/Diorama";
-import { SceneControls } from "@/components/scene/SceneControls";
+import { WorkspaceCanvas } from "@/components/workspace3d/WorkspaceCanvas";
+import { CrewBridge } from "@/components/workspace3d/CrewBridge";
 import { AgentProfile } from "@/components/hud/AgentProfile";
-import { ReplayBar } from "@/components/hud/ReplayBar";
 import { SidePanel } from "@/components/hud/SidePanel";
 import { TopBar } from "@/components/hud/TopBar";
 import { BoardOverlay } from "@/components/kanban/BoardOverlay";
@@ -29,8 +28,9 @@ export default function Home() {
           className="glass relative min-h-[72svh] flex-1 overflow-hidden rounded-2xl lg:min-h-0 lg:basis-[65%]"
           aria-label="Scène de l'équipe"
         >
-          <Diorama />
-          <SceneControls />
+          {/* The Blender board, driven automatically by Atlas via the crew bridge. */}
+          <WorkspaceCanvas mode="play" />
+          <CrewBridge />
           <div className="absolute top-3 right-3 z-10">
             <Button variant="primary" onClick={() => setBoardOpen(true)}>
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
@@ -41,7 +41,6 @@ export default function Home() {
               Kanban
             </Button>
           </div>
-          <ReplayBar />
         </motion.section>
 
         <div className="min-h-0 lg:basis-[35%] lg:max-w-105">
