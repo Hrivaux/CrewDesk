@@ -105,6 +105,18 @@ async function listRecursive(root: string, dir: string, out: string[]): Promise<
   }
 }
 
+/** Liste tous les fichiers du projet (chemins relatifs, hors dossiers ignorés). */
+export async function listProjectFiles(root: string): Promise<string[]> {
+  const out: string[] = [];
+  await listRecursive(root, root, out);
+  return out.sort();
+}
+
+/** Lit un fichier du projet en binaire (chemin relatif confiné). */
+export async function readProjectFile(root: string, relPath: string): Promise<Buffer> {
+  return fs.readFile(resolveInside(root, relPath));
+}
+
 export interface ToolOutcome {
   result: string;
   isError?: boolean;

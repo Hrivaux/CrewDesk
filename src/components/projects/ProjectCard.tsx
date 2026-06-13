@@ -53,11 +53,17 @@ export function ProjectCard({ project, tasks, index }: ProjectCardProps) {
             </h2>
             <p className="mt-1.5 text-xs leading-relaxed text-muted">{project.objective}</p>
             {project.dir ? (
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <p className="truncate font-mono text-[9px] tracking-[0.08em] text-cyan/70">
                   📁 {project.dir}/
                 </p>
                 <Button onClick={() => setPreviewProject(project.id)}>▶ Aperçu</Button>
+                <a
+                  href={`/api/export/${project.dir}`}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[rgba(234,240,248,0.12)] px-3 py-1.5 font-display text-xs font-semibold transition-colors hover:bg-[rgba(234,240,248,0.06)]"
+                >
+                  ⬇ Télécharger
+                </a>
               </div>
             ) : null}
           </div>

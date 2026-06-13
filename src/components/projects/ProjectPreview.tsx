@@ -59,6 +59,12 @@ export function ProjectPreview() {
               <div className="flex shrink-0 items-center gap-1.5">
                 <Button onClick={() => setReloadKey((k) => k + 1)}>⟳ Recharger</Button>
                 <a
+                  href={`/api/export/${project.dir}`}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-cyan/40 bg-cyan/15 px-3 py-1.5 font-display text-xs font-semibold text-cyan transition-colors hover:bg-cyan/25"
+                >
+                  ⬇ Télécharger .zip
+                </a>
+                <a
                   href={url}
                   target="_blank"
                   rel="noreferrer"
